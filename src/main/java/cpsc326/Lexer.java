@@ -118,7 +118,7 @@ public class Lexer {
 
         // Check EOF
         if (isEOF(ch)) {
-            return new Token(TokenType.EOS, "End Of Stream", line, column);
+            return new Token(TokenType.EOS, "end-of-stream", line, column);
         }
 
         // Check single character tokens
@@ -137,7 +137,7 @@ public class Lexer {
             case '[':
                 return new Token(TokenType.LBRACKET, "[", line, column);
             case ']':
-                return new Token(TokenType.RBRACKET, ")", line, column);
+                return new Token(TokenType.RBRACKET, "]", line, column);
             case '{':
                 return new Token(TokenType.LBRACE, "{", line, column);
             case '}':
@@ -189,31 +189,47 @@ public class Lexer {
         // Strings
         if (ch == '"') {
             StringBuilder string = new StringBuilder();
+            ch = read();
             do {
-                ch = read();
-                if (isEOL(ch)) error("EOL character found inside of string", line, column );
+                if (isEOL(ch)) error("EOL character found inside of string", line, column);
                 if (isEOF(ch)) error("EOF character found inside of string", line, column);
                 string.append(ch);
+                ch = read();
             } while (ch != '"');
-            return new Token(TokenType.STRING_VAL, string.toString(), line, column - string.length());
+            return new Token(TokenType.STRING_VAL, string.toString(), line, column - string.length() - 1);
         }
 
         // Numbers
         if (Character.isDigit(ch)) {
             boolean isInteger = true;
             StringBuilder number = new StringBuilder();
-                number.append(ch);
-            do {
+            number.append(ch);
+
+            while (true) {
                 if (Character.isDigit(peek())) {
                     ch = read();
                     number.append(ch);
-                } else if (peek() == '.') {
-                    if (isInteger) {
-                        isInteger = false;
-                    }
+                } else if (peek() == '.' && isInteger) {
+                    isInteger = false;
+                    ch = read();
+                    number.append(ch);
+                } else {
+                    return isInteger
+                            ? new Token(TokenType.INT_VAL, number.toString(), line, column - number.length() + 1)
+                            : new Token(TokenType.DOUBLE_VAL, number.toString(), line, column - number.length() + 1);
                 }
-
             }
+        }
+
+        // Comments
+        if (ch == '#') {
+            StringBuilder comment = new StringBuilder();
+            do {
+                ch = read();
+                comment.append(ch);
+            } while (!isEOL(peek()) && !isEOF(peek()));
+
+            return new Token(TokenType.COMMENT, comment.toString(), line, column - comment.length());
         }
 
         return null;
