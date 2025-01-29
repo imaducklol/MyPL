@@ -182,6 +182,8 @@ public class Lexer {
                 if (peek() == '=') {
                     read();
                     return new Token(TokenType.NOT_EQUAL, "!=", line, column - 1);
+                } else {
+                    error("expecting !=", line, column);
                 }
             default:
         }
@@ -191,8 +193,8 @@ public class Lexer {
             StringBuilder string = new StringBuilder();
             ch = read();
             do {
-                if (isEOL(ch)) error("EOL character found inside of string", line, column);
-                if (isEOF(ch)) error("EOF character found inside of string", line, column);
+                if (isEOL(ch)) error("non-terminated string", line, column);
+                if (isEOF(ch)) error("non-terminated string", line, column);
                 string.append(ch);
                 ch = read();
             } while (ch != '"');
@@ -201,6 +203,9 @@ public class Lexer {
 
         // Numbers
         if (Character.isDigit(ch)) {
+            if (ch == '0' && Character.isDigit(peek())) {
+                error("leading zero in number", line, column);
+            }
             boolean isInteger = true;
             StringBuilder number = new StringBuilder();
             number.append(ch);
@@ -213,6 +218,9 @@ public class Lexer {
                     isInteger = false;
                     ch = read();
                     number.append(ch);
+                    if (!Character.isDigit(peek())) {
+                        error("missing digit after decimal", line, column + 1);
+                    }
                 } else {
                     return isInteger
                             ? new Token(TokenType.INT_VAL, number.toString(), line, column - number.length() + 1)
@@ -231,6 +239,50 @@ public class Lexer {
 
             return new Token(TokenType.COMMENT, comment.toString(), line, column - comment.length());
         }
+
+        // Reserved words / Identifiers
+        if (Character.isAlphabetic(ch)) {
+            StringBuilder word = new StringBuilder();
+            word.append(ch);
+            while (Character.isAlphabetic(peek()) || Character.isDigit(peek()) || peek() == '_') {
+                ch = read();
+                word.append(ch);
+            }
+
+            return switch (word.toString()) {
+                // Fancy values
+                case "true", "false" -> new Token(TokenType.BOOL_VAL, word.toString(), line, column - word.length() + 1);
+                case "null" -> new Token(TokenType.NULL_VAL, word.toString(), line, column - word.length() + 1);
+
+                // Boolean operators
+                case "and" -> new Token(TokenType.AND, word.toString(), line, column - word.length() + 1);
+                case "or" -> new Token(TokenType.OR, word.toString(), line, column - word.length() + 1);
+                case "not" -> new Token(TokenType.NOT, word.toString(), line, column - word.length() + 1);
+
+                // Types
+                case "int" -> new Token(TokenType.INT_TYPE, word.toString(), line, column - word.length() + 1);
+                case "double" -> new Token(TokenType.DOUBLE_TYPE, word.toString(), line, column - word.length() + 1);
+                case "string" -> new Token(TokenType.STRING_TYPE, word.toString(), line, column - word.length() + 1);
+                case "bool" -> new Token(TokenType.BOOL_TYPE, word.toString(), line, column - word.length() + 1);
+                case "void" -> new Token(TokenType.VOID_TYPE, word.toString(), line, column - word.length() + 1);
+
+                // Reserved words
+                case "struct" -> new Token(TokenType.STRUCT, word.toString(), line, column - word.length() + 1);
+                case "var" -> new Token(TokenType.VAR, word.toString(), line, column - word.length() + 1);
+                case "while" -> new Token(TokenType.WHILE, word.toString(), line, column - word.length() + 1);
+                case "for" -> new Token(TokenType.FOR, word.toString(), line, column - word.length() + 1);
+                case "from" -> new Token(TokenType.FROM, word.toString(), line, column - word.length() + 1);
+                case "to" -> new Token(TokenType.TO, word.toString(), line, column - word.length() + 1);
+                case "if" -> new Token(TokenType.IF, word.toString(), line, column - word.length() + 1);
+                case "else" -> new Token(TokenType.ELSE, word.toString(), line, column - word.length() + 1);
+                case "new" -> new Token(TokenType.NEW, word.toString(), line, column - word.length() + 1);
+                case "return" -> new Token(TokenType.RETURN, word.toString(), line, column - word.length() + 1);
+
+                default -> new Token(TokenType.ID, word.toString(), line, column - word.length() + 1);
+            };
+        }
+
+        error("unrecognized symbol '" + ch + "'", line, column);
 
         return null;
     }
