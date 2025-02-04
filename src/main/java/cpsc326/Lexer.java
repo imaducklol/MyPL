@@ -192,12 +192,12 @@ public class Lexer {
         if (ch == '"') {
             StringBuilder string = new StringBuilder();
             ch = read();
-            do {
+            while (ch != '"') {
                 if (isEOL(ch)) error("non-terminated string", line, column);
                 if (isEOF(ch)) error("non-terminated string", line, column);
                 string.append(ch);
                 ch = read();
-            } while (ch != '"');
+            }
             return new Token(TokenType.STRING_VAL, string.toString(), line, column - string.length() - 1);
         }
 

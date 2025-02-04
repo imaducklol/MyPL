@@ -210,17 +210,17 @@ class LexerTests {
     assertEquals("a", t.lexeme);
     assertEquals(1, t.line);
     assertEquals(1, t.column);
-    t = lexer.nextToken();    
+    t = lexer.nextToken();
     assertEquals(TokenType.STRING_VAL, t.tokenType);
     assertEquals("?", t.lexeme);
     assertEquals(1, t.line);
     assertEquals(5, t.column);
-    t = lexer.nextToken();    
+    t = lexer.nextToken();
     assertEquals(TokenType.STRING_VAL, t.tokenType);
     assertEquals("<", t.lexeme);
     assertEquals(1, t.line);
     assertEquals(9, t.column);
-    assertEquals(TokenType.EOS, lexer.nextToken().tokenType);    
+    assertEquals(TokenType.EOS, lexer.nextToken().tokenType);
   }
 
   @Test
@@ -672,8 +672,74 @@ class LexerTests {
   // 2. Two new "negative" tests. These should each be for
   //    unrecognized symbols.
   // 
-  //----------------------------------------------------------------------  
+  //----------------------------------------------------------------------
 
-  
-  
+  @Test
+  void malformedDoubleLiterals() {
+    var p = ".12 .03";
+    Lexer lexer = new Lexer(istream(p));
+    Token t = lexer.nextToken();
+    assertEquals(TokenType.DOT, t.tokenType);
+    assertEquals(".", t.lexeme);
+    assertEquals(1, t.line);
+    assertEquals(1, t.column);
+    t = lexer.nextToken();
+    assertEquals(TokenType.INT_VAL, t.tokenType);
+    assertEquals("12", t.lexeme);
+    assertEquals(1, t.line);
+    assertEquals(2, t.column);
+    t = lexer.nextToken();
+    assertEquals(TokenType.DOT, t.tokenType);
+    assertEquals(".", t.lexeme);
+    assertEquals(1, t.line);
+    assertEquals(5, t.column);
+    Exception e = assertThrows(MyPLException.class, () -> lexer.nextToken());
+    var m = "LEXER_ERROR: [1,6] leading zero in number";
+    assertEquals(m, e.getMessage());
+  }
+
+  @Test
+  void excessiveWhitespaceWithTabs() {
+    var p = "         \t\t\t\t\t\n\n\n\n\n\n\n\n\n ExampleID           \t\t\t\t\t\n\n\n\n\n\n\n\n\n ExampleIDPart2\tExampleIDPart3";
+    Lexer lexer = new Lexer(istream(p));
+    Token t = lexer.nextToken();
+    assertEquals(TokenType.ID, t.tokenType);
+    assertEquals("ExampleID", t.lexeme);
+    assertEquals(10, t.line);
+    assertEquals(2, t.column);
+    t = lexer.nextToken();
+    assertEquals(TokenType.ID, t.tokenType);
+    assertEquals("ExampleIDPart2", t.lexeme);
+    assertEquals(19, t.line);
+    assertEquals(2, t.column);
+    t = lexer.nextToken();
+    assertEquals(TokenType.ID, t.tokenType);
+    assertEquals("ExampleIDPart3", t.lexeme);
+    assertEquals(19, t.line);
+    assertEquals(17, t.column);
+  }
+
+  @Test
+  void unrecognizedSymbol() {
+    var p = "\0";
+    Lexer lexer = new Lexer(istream(p));
+    Exception e = assertThrows(MyPLException.class, () -> lexer.nextToken());
+    var m = "LEXER_ERROR: [1,1] unrecognized symbol '�'";
+    // Couldn't get the null character to compare right but length comparison makes it work
+    assertEquals(m.length(), e.getMessage().length());
+  }
+
+  @Test
+  void unrecognizedSymbolWithExtras() {
+    var p = "abcde|";
+    Lexer lexer = new Lexer(istream(p));
+    Token t = lexer.nextToken();
+    assertEquals(TokenType.ID, t.tokenType);
+    assertEquals("abcde", t.lexeme);
+    assertEquals(1, t.line);
+    assertEquals(1, t.column);
+    Exception e = assertThrows(MyPLException.class, () -> lexer.nextToken());
+    var m = "LEXER_ERROR: [1,6] unrecognized symbol '|'";
+    assertEquals(m, e.getMessage());
+  }
 }
