@@ -225,7 +225,7 @@ public class SimpleParser {
       } else {
         baseType();
       }
-      eat(TokenType.RBRACKET, "Expected RBRACKET");
+      eat(TokenType.RBRACKET, "Expected RBRACKET for dataType");
     } else if (match(TokenType.ID)) {
       advance();
     } else {
@@ -273,7 +273,7 @@ public class SimpleParser {
         }
         break;
       default:
-        error("Expected any of VAR, WHILE, IF, FOR, RETURN, ID");
+        error("Expected statement");
     }
   }
 
@@ -379,7 +379,7 @@ public class SimpleParser {
     if (match(TokenType.LBRACKET)) {
       advance();
       expr();
-      eat(TokenType.RBRACKET, "Expected RBRACKET");
+      eat(TokenType.RBRACKET, "Expected RBRACKET for lvalue");
     }
     while (match(TokenType.DOT)) {
       advance();
@@ -387,7 +387,7 @@ public class SimpleParser {
       if (match(TokenType.LBRACKET)) {
         advance();
         expr();
-        eat(TokenType.RBRACKET, "Expected RBRACKET");
+        eat(TokenType.RBRACKET, "Expected RBRACKET for lvalue");
       }
     }
   }
@@ -481,9 +481,9 @@ public class SimpleParser {
       args();
       eat(TokenType.RPAREN, "Expected RPAREN");
     } else {
-      eat(TokenType.RBRACKET, " Expected RBRACKET");
+      eat(TokenType.LBRACKET, " Expected RBRACKET in newRvalue");
       expr();
-      eat(TokenType.RBRACKET, "Expected RBRACKET");
+      eat(TokenType.RBRACKET, "Expected RBRACKET in newRvalue");
     }
   }
 
@@ -503,7 +503,7 @@ public class SimpleParser {
     if (match(TokenType.LBRACKET)) {
       advance();
       expr();
-      eat(TokenType.RBRACKET, "Expected RBRACKET");
+      eat(TokenType.RBRACKET, "Expected RBRACKET for varRvalue");
     }
     while (match(TokenType.DOT)) {
       advance();
@@ -511,7 +511,7 @@ public class SimpleParser {
       if (match(TokenType.LBRACKET)) {
         advance();
         expr();
-        eat(TokenType.RBRACKET, "Expected RBRACKET");
+        eat(TokenType.RBRACKET, "Expected RBRACKET for varRvalue");
       }
     }
   }
