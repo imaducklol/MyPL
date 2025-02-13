@@ -1359,5 +1359,64 @@ class SimpleParserTests {
   //    "interesting" syntax error.
   // 
   //----------------------------------------------------------------------  
-    
+
+
+  @Test
+  void structWithMutualReferences() {
+    var p =
+            """
+            struct A {
+              b: B
+            }
+            struct B {
+              a: A
+            }
+            """;
+    Lexer lexer = new Lexer(istream(p));
+    SimpleParser parser = new SimpleParser(lexer);
+    parser.parse();
+  }
+
+  @Test
+  void functionOverloading() {
+    var p =
+            """
+            int add(x: int) {}
+            int add(x: int, y: int) {}
+            double add(a: double, b: int) {}
+            """;
+    Lexer lexer = new Lexer(istream(p));
+    SimpleParser parser = new SimpleParser(lexer);
+    parser.parse();
+  }
+
+  @Test
+  void missingBracesWithStructs() {
+    var p =
+            """
+            struct S {
+              x: int
+            struct T {
+              y: double
+            }
+            """;
+    Lexer lexer = new Lexer(istream(p));
+    SimpleParser parser = new SimpleParser(lexer);
+    Exception e = assertThrows(MyPLException.class, () -> parser.parse());
+    assertTrue(e.getMessage().startsWith("PARSE_ERROR: "));
+  }
+
+  @Test
+  void missingParensInsideFuncDef() {
+    var p =
+            """
+            void f() {
+              x = g(1, 2
+            }
+            """;
+    Lexer lexer = new Lexer(istream(p));
+    SimpleParser parser = new SimpleParser(lexer);
+    Exception e = assertThrows(MyPLException.class, () -> parser.parse());
+    assertTrue(e.getMessage().startsWith("PARSE_ERROR: "));
+  }
 }
