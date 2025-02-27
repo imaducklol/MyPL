@@ -2,11 +2,12 @@
  * CPSC 326, Spring 2025
  * The AST Parser implementation.
  *
- * PUT YOUR NAME HERE IN PLACE OF THIS TEXT
+ * Orion Hess
  */
 
 package cpsc326;
 
+import javax.xml.crypto.Data;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -114,410 +115,528 @@ public class ASTParser {
    * @return the corresponding Program AST object
    */
   private Program program() {
+    Program program = new Program();
     while (!match(TokenType.EOS)) {
       // Struct definition
       if (match(TokenType.STRUCT)) {
-        structDef();
+        program.structs.add(structDef());
       }
       // Function definition
       else {
-        funDef();
+        program.functions.add(funDef());
       }
     }
+    return program;
   }
 
   /**
-   * Checks for a valid struct definition.
+   * Parse structs
+   * @return the corresponding Struct AST object
    */
-  private void structDef() {
+  private StructDef structDef() {
+    StructDef structDef = new StructDef();
+    structDef.fields = new ArrayList<>();
     // First already checked
     advance();
-    eat(TokenType.ID, "Expected ID");
-    eat(TokenType.LBRACE, "Expected LBRACE");
-    fields();
-    eat(TokenType.RBRACE, "Expected RBRACE");
-  }
-
-  /**
-   * Checks for valid fields
-   */
-  private void fields() {
     if (match(TokenType.ID)) {
-      field();
+      structDef.structName = currToken;
+      advance();
+    } else {
+      error("Expected ID");
+    }
+    eat(TokenType.LBRACE, "Expected LBRACE");
+    if (match(TokenType.ID)) {
+      structDef.fields.add(varDef());
       while (match(TokenType.COMMA)) {
         advance();
-        field();
+        structDef.fields.add(varDef());
       }
     }
+    eat(TokenType.RBRACE, "Expected RBRACE");
+    return structDef;
   }
 
   /**
-   * Checks for a valid field
+   * Parse variable definitions
+   * @return the corresponding VarDef AST object
    */
-  private void field() {
+  private VarDef varDef() {
+    VarDef varDef = new VarDef();
     // ID already checked
+    varDef.varName = currToken;
     advance();
     eat(TokenType.COLON, "Expected COLON");
-    dataType();
+    varDef.dataType = dataType();
+    return varDef;
   }
 
   /**
-   * Checks for a valid function definition.
+   * Parse function definitions
+   * @return the corresponding FunDef AST object
    */
-  private void funDef() {
-    returnType();
-    eat(TokenType.ID, "Expected ID");
+  private FunDef funDef() {
+    FunDef funDef = new FunDef();
+    funDef.returnType = dataType();
+    if (match(TokenType.ID)) {
+      funDef.funName = currToken;
+      advance();
+    } else {
+      error("Expected ID");
+    }
     eat(TokenType.LPAREN, "Expected LPAREN");
-    params();
+    funDef.params = params();
     eat(TokenType.RPAREN, "Expected RPAREN");
-    block();
+    funDef.stmts = stmts();
+    return funDef;
   }
 
   /**
-   * Checks for a valid block
+   * Parse statements
+   * @return a list of Stmt AST Objects
    */
-  private void block() {
+  private List<Stmt> stmts() {
+    List<Stmt> stmts = new ArrayList<>();
     eat(TokenType.LBRACE, "Expected LBRACE");
     while (!match(TokenType.RBRACE)) {
-      stmt();
+      stmts.add(stmt());
     }
     // Hit an RBRACE
     advance();
+    return stmts;
   }
 
   /**
-   * Checks for a valid returnType
+   * Parse parameters
+   * @return a list of VarDef AST objects
    */
-  private void returnType() {
-    if (match(TokenType.VOID_TYPE)) {
-      advance();
-    } else {
-      dataType();
-    }
-  }
-
-  /**
-   * Checks for valid params
-   */
-  private void params() {
+  private List<VarDef> params() {
+    List<VarDef> params = new ArrayList<>();
     if (match(TokenType.ID)) {
-      param();
+      params.add(param());
       while (match(TokenType.COMMA)) {
         advance();
-        param();
+        params.add(param());
       }
     }
+    return params;
   }
 
   /**
-   * Checks for a valid param
+   * Parse individual parameters
+   * @return a VarDef AST object for the parameter
    */
-  private void param() {
-    eat(TokenType.ID, "Expected ID");
+  private VarDef param() {
+    VarDef varDef = new VarDef();
+    if (match(TokenType.ID)) {
+      varDef.varName = currToken;
+      advance();
+    } else {
+      error("Expected ID");
+    }
     eat(TokenType.COLON, "Expected COLON");
-    dataType();
+    varDef.dataType = dataType();
+    return varDef;
   }
 
   /**
-   * Checks for a valid dataType
+   * Parse data types
+   * @return the corresponding DataType AST object
    */
-  private void dataType() {
+  private DataType dataType() {
+    DataType dataType = new DataType();
     if (match(TokenType.LBRACKET)) {
       advance();
+      dataType.isArray = true;
       if (match(TokenType.ID)) {
+        dataType.type = currToken;
         advance();
       } else {
-        baseType();
+        dataType.type = baseType();
       }
-      eat(TokenType.RBRACKET, "Expected RBRACKET for dataType");
+      eat(TokenType.RBRACKET, "Expected RBRACKET for array");
     } else if (match(TokenType.ID)) {
+      dataType.type = currToken;
       advance();
     } else {
-      baseType();
+      dataType.type = baseType();
     }
+    return dataType;
   }
 
   /**
-   * Checks for a valid baseType
+   * Parse base types
+   * @return the Token of the type
    */
-  private void baseType() {
-    if (matchAny(List.of(TokenType.INT_TYPE, TokenType.DOUBLE_TYPE, TokenType.STRING_TYPE, TokenType.BOOL_TYPE))) {
+  private Token baseType() {
+    Token token = null;
+    if (matchAny(List.of(TokenType.INT_TYPE, TokenType.DOUBLE_TYPE, TokenType.STRING_TYPE, TokenType.BOOL_TYPE, TokenType.VOID_TYPE))) {
+      token = currToken;
       advance();
     } else {
-      error("Expected one of INT_TYPE, DOUBLE_TYPE, STRING_TYPE, BOOL_TYPE");
+      error("Expected one of INT_TYPE, DOUBLE_TYPE, STRING_TYPE, BOOL_TYPE, VOID_TYPE");
     }
+    return token;
   }
 
   /**
-   * Checks for a valid stmt
+   * Parse statements
+   * @return the corresponding VarDef AST object
    */
-  private void stmt() {
+  private Stmt stmt() {
     switch (currToken.tokenType) {
-      case TokenType.VAR:
-        varStmt();
-        break;
-      case TokenType.WHILE:
-        whileStmt();
-        break;
-      case TokenType.IF:
-        ifStmt();
-        break;
-      case TokenType.FOR:
-        forStmt();
-        break;
-      case TokenType.RETURN:
-        returnStmt();
-        break;
+      case TokenType.VAR:     return varStmt();
+      case TokenType.WHILE:   return whileStmt();
+      case TokenType.IF:      return ifStmt();
+      case TokenType.FOR:     return forStmt();
+      case TokenType.RETURN:  return returnStmt();
       case TokenType.ID:
+        Token idToken = currToken;
         advance();
         if (match(TokenType.LPAREN)) {
-          funCall();
+          return funCall(idToken);
         } else {
-          assignStmt();
+          return assignStmt(idToken);
         }
-        break;
       default:
         error("Expected statement");
+        return null;
     }
   }
 
   /**
-   * Checks for a valid varStmt
+   * Parse variable statements
+   * @return the corresponding VarStmt AST object
    */
-  private void varStmt() {
+  private VarStmt varStmt() {
+    VarStmt varStmt = new VarStmt();
     // Var already checked
     advance();
-    eat(TokenType.ID, "Expected ID");
-    if (match(TokenType.ASSIGN)) {
-      varInit();
+    if (match(TokenType.ID)) {
+      varStmt.varName = currToken;
+      advance();
     } else {
-      varType();
+      error("Expected ID");
+    }
+    if (match(TokenType.ASSIGN)) {
+      varStmt.expr = Optional.of(varInit());
+    } else {
+      varStmt.dataType = Optional.of(varType());
+
       if (match(TokenType.ASSIGN)) {
-        varInit();
+        varStmt.expr = Optional.of(varInit());
+      } else {
+        varStmt.expr = Optional.empty();
       }
     }
+    return varStmt;
   }
 
   /**
-   * Checks for a valid varType
+   * Parse variable type
+   * @return the corresponding DataType AST object
    */
-  private void varType() {
+  private DataType varType() {
     eat(TokenType.COLON, "Expected COLON");
-    dataType();
+    return dataType();
   }
 
   /**
-   * Checks for a valid varInit
+   * Parse variable initialization
+   * @return the corresponding Expr AST object
    */
-  private void varInit() {
+  private Expr varInit() {
     // ASSIGN already checked
     advance();
-    expr();
+    return expr();
   }
 
   /**
-   * Checks for a valid whileStmt
+   * Parse while statement
+   * @return the corresponding WhileStmt AST object
    */
-  private void whileStmt() {
+  private WhileStmt whileStmt() {
+    WhileStmt whileStmt = new WhileStmt();
     // WHILE already checked
     advance();
-    expr();
-    block();
+    whileStmt.condition = expr();
+    whileStmt.stmts = stmts();
+    return whileStmt;
   }
 
   /**
-   * Checks for a valid ifStmt
+   * Parse if statements
+   * @return the corresponding IfStmt AST object
    */
-  private void ifStmt() {
+  private IfStmt ifStmt() {
+    IfStmt ifStmt = new IfStmt();
     // IF already checked
     advance();
-    expr();
-    block();
+    ifStmt.condition = expr();
+    ifStmt.ifStmts = stmts();
     if (match(TokenType.ELSE)) {
       advance();
       if (match(TokenType.IF)) {
-        ifStmt();
+        ifStmt.elseIf = Optional.of(ifStmt());
       } else {
-        block();
+        ifStmt.elseStmts = Optional.of(stmts());
       }
     }
+    return ifStmt;
   }
 
   /**
-   * Checks for a valid forStmt
+   * Parse for statements
+   * @return the corresponding ForStmt AST object
    */
-  private void forStmt() {
+  private ForStmt forStmt() {
+    ForStmt forStmt = new ForStmt();
     // FOR already checked
     advance();
-    eat(TokenType.ID, "Expected ID");
+    if (match(TokenType.ID)) {
+      forStmt.varName = currToken;
+    } else {
+      error("Expected ID");
+    }
     eat(TokenType.FROM, "Expected FROM");
-    expr();
+    forStmt.fromExpr = expr();
     eat(TokenType.TO, "Expected TO");
-    expr();
-    block();
+    forStmt.toExpr = expr();
+    forStmt.stmts = stmts();
+    return forStmt;
   }
 
   /**
-   * Checks for a valid returnStmt
+   * Parse return statements
+   * @return the corresponding ReturnStmt AST object
    */
-  private void returnStmt() {
+  private ReturnStmt returnStmt() {
+    ReturnStmt returnStmt = new ReturnStmt();
     // RETURN already checked
     advance();
-    expr();
+    returnStmt.expr = expr();
+    return returnStmt;
   }
 
   /**
-   * Checks for a valid assignStmt
+   * Parse assign statements
+   * @return the corresponding AssignStmt AST object
    */
-  private void assignStmt() {
-    lvalue();
+  private AssignStmt assignStmt(Token idToken) {
+    AssignStmt assignStmt = new AssignStmt();
+    assignStmt.lvalue = lvalue(idToken);
     eat(TokenType.ASSIGN, "Expected ASSIGN");
-    expr();
+    assignStmt.expr = expr();
+    return assignStmt;
   }
 
   /**
-   * Checks for a valid lvalue
+   * Parse left value for assign statements
+   * @return a list of VarDef AST objects
    */
-  private void lvalue() {
+  private List<VarRef> lvalue(Token idToken) {
+    List<VarRef> lvalue = new ArrayList<>();
+    VarRef varRef = new VarRef();
+    varRef.varName = idToken;
     // ID already checked and advanced (See stmt())
     if (match(TokenType.LBRACKET)) {
       advance();
-      expr();
+      varRef.arrayExpr = Optional.of(expr());
       eat(TokenType.RBRACKET, "Expected RBRACKET for lvalue");
     }
+    lvalue.add(varRef);
     while (match(TokenType.DOT)) {
       advance();
-      eat(TokenType.ID, "Expected ID");
+      varRef = new VarRef();
+      if (match(TokenType.ID)) {
+        varRef.varName = currToken;
+        advance();
+      } else {
+        error("Expected ID");
+      }
       if (match(TokenType.LBRACKET)) {
         advance();
-        expr();
+        varRef.arrayExpr = Optional.of(expr());
         eat(TokenType.RBRACKET, "Expected RBRACKET for lvalue");
       }
+      lvalue.add(varRef);
     }
+    return lvalue;
   }
 
   /**
-   * Checks for a valid funCall
+   * Parse function call
+   * @return the corresponding CallRValue AST object
    */
-  private void funCall() {
+  private CallRValue funCall(Token idToken) {
+    CallRValue funCall = new CallRValue();
+    funCall.funName = idToken;
     // ID already checked and advanced (See stmt())
     eat(TokenType.LPAREN, "Expected LPAREN");
-    args();
+    funCall.args = args();
     eat(TokenType.RPAREN, "Expected RPAREN");
+    return funCall;
   }
 
   /**
-   * Checks for a valid args
+   * Parse arguments for a function call
+   * @return a list of the corresponding Expr AST objects
    */
-  private void args() {
+  private List<Expr> args() {
+    List<Expr> args = new ArrayList<>();
     // If there aren't args, there will be an RPAREN
     if  (!match(TokenType.RPAREN)) {
-      expr();
+      args.add(expr());
     }
     while (match(TokenType.COMMA)) {
       advance();
-      expr();
+      args.add(expr());
     }
+    return args;
   }
 
   /**
-   * Checks for a valid expr
+   * Parse expressions
+   * @return the corresponding Expr AST object
    */
-  private void expr() {
+  private Expr expr() {
+    Expr expr;
     if (match(TokenType.NOT)) {
+      UnaryExpr unaryExpr = new UnaryExpr();
+      unaryExpr.unaryOp = currToken;
       advance();
-      expr();
+      unaryExpr.expr = expr();
+      expr = unaryExpr;
     } else if (match(TokenType.LPAREN)) {
       advance();
-      args();
+      expr = expr();
       eat(TokenType.RPAREN, "Expected RPAREN");
     } else {
-      rvalue();
+      BasicExpr basicExpr = new BasicExpr();
+      basicExpr.rvalue = rvalue();
+      expr = basicExpr;
     }
     if (isBinOp()) {
-      binOp();
-      expr();
+      BinaryExpr binaryExpr = new BinaryExpr();
+      binaryExpr.lhs = expr;
+      binaryExpr.binaryOp = binOp();
+      binaryExpr.rhs = expr();
+      expr = binaryExpr;
     }
+    return expr;
   }
 
   /**
-   * Checks for a valid binOp
+   * Parse a binary operator
+   * @return the corresponding Token
    */
-  private void binOp() {
+  private Token binOp() {
     // isBinOp() already checked
+    Token token = currToken;
     advance();
+    return token;
   }
 
   /**
-   * Checks for a valid rvalue
+   * Parse right values
+   * @return the corresponding RValue AST object
    */
-  private void rvalue() {
+  private RValue rvalue() {
     if (isLiteral()) {
-      literal();
+      return literal();
     } else if (match(TokenType.NEW)) {
-      newRvalue();
+      return newRvalue();
     } else if (match(TokenType.ID)) {
+      Token idToken = currToken;
       // Must look further ahead
       advance();
       if (match(TokenType.LPAREN)) {
-        funCall();
+        return funCall(idToken);
       } else {
-        varRvalue();
+        return varRvalue(idToken);
       }
-    } else {
-      error("Expected one of LITERAL, NEW, ID");
     }
+    error("Expected one of LITERAL, NEW, ID");
+    return null;
   }
 
   /**
-   * Checks for a valid newRvalue
+   * Parse new right value
+   * @return the corresponding NewRValue AST object
    */
-  private void newRvalue() {
+  private NewRValue newRvalue() {
+    NewRValue newRValue;
+    Token token = null;
     // NEW already checked
     advance();
     if (match(TokenType.ID)) {
+      token = currToken;
       advance();
     } else {
-      baseType();
+      token = baseType();
     }
     if (match(TokenType.LPAREN)) {
       advance();
-      args();
+      NewStructRValue newStructRValue = new NewStructRValue();
+      newStructRValue.structName = token;
+      newStructRValue.args = args();
+      newRValue = newStructRValue;
       eat(TokenType.RPAREN, "Expected RPAREN");
     } else {
-      eat(TokenType.LBRACKET, " Expected RBRACKET in newRvalue");
-      expr();
-      eat(TokenType.RBRACKET, "Expected RBRACKET in newRvalue");
+      eat(TokenType.LBRACKET, " Expected RBRACKET");
+      NewArrayRValue newArrayRValue = new NewArrayRValue();
+      newArrayRValue.type = token;
+      newArrayRValue.arrayExpr = expr();
+      newRValue = newArrayRValue;
+      eat(TokenType.RBRACKET, "Expected RBRACKET");
     }
+    return newRValue;
   }
 
   /**
-   * Checks for a valid literal
+   * Parse literal
+   * @return the corresponding SimpleRValue AST object
    */
-  private void literal() {
+  private SimpleRValue literal() {
+    SimpleRValue literal = new SimpleRValue();
+    literal.literal = currToken;
     // isLiteral() already checked
     advance();
+    return literal;
   }
 
   /**
-   * Checks for a valid varRvalue
+   * Parse variable
+   * @return the corresponding VarRValue AST object
    */
-  private void varRvalue() {
+  private VarRValue varRvalue(Token idToken) {
+    VarRValue varRValue = new VarRValue();
+    VarRef varRef = new VarRef();
+    varRef.varName = idToken;
     // ID already checked and advanced
     if (match(TokenType.LBRACKET)) {
       advance();
-      expr();
+      varRef.arrayExpr = Optional.of(expr());
       eat(TokenType.RBRACKET, "Expected RBRACKET for varRvalue");
     }
+    varRValue.path.add(varRef);
+
     while (match(TokenType.DOT)) {
       advance();
-      eat(TokenType.ID, "Expected ID");
+      varRef = new VarRef();
+      if (match(TokenType.ID)) {
+        varRef.varName = currToken;
+        advance();
+      } else {
+        error("Expected ID");
+      }
       if (match(TokenType.LBRACKET)) {
         advance();
-        expr();
+        varRef.arrayExpr = Optional.of(expr());
         eat(TokenType.RBRACKET, "Expected RBRACKET for varRvalue");
       }
+      varRValue.path.add(varRef);
     }
+    return varRValue;
   }
   
 }
