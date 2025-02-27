@@ -394,6 +394,7 @@ public class ASTParser {
     advance();
     if (match(TokenType.ID)) {
       forStmt.varName = currToken;
+      advance();
     } else {
       error("Expected ID");
     }
