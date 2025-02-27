@@ -37,7 +37,6 @@ public class MyPL {
     }
   }
 
-
   /**
    * Parse the given mypl program and output the first error found, if
    * any, otherwise nothing is printed.
@@ -58,7 +57,15 @@ public class MyPL {
    * @param input The mypl program as an input stream
    */
   private static void printMode(InputStream input) {
-    System.out.println("PRINT mode not yet supported");
+    try {
+      Lexer lexer = new Lexer(input);
+      ASTParser parser = new ASTParser(lexer);
+      Program p = parser.parse();
+      PrintVisitor v = new PrintVisitor();
+      p.accept(v);
+    } catch(MyPLException e) {
+      System.err.println(e.getMessage());
+    }
   }
 
   /**
