@@ -61,20 +61,21 @@ public class PrintVisitor implements Visitor {
       f.accept(this);
   }
 
-  // TODO: Complete the rest of the visit functions.
-
-  // Use the above helper functions to write, deal with indentation,
-  // and print newlines as part of your visit functions.
 
   // general AST classes
   public void visit(FunDef node) {
     write(indent());
+
+    // check if return val is an array
     if (node.returnType.isArray) {
       write("[" + node.returnType.type.lexeme + "]");
     } else {
       write(node.returnType.type.lexeme);
     }
+
     write(" " + node.funName.lexeme + "(");
+
+    // loop through parameters
     List<VarDef> params = node.params;
     for (int i = 0; i < params.size(); i++) {
       params.get(i).accept(this);
@@ -82,8 +83,11 @@ public class PrintVisitor implements Visitor {
         write(", ");
       }
     }
+
     write(") {");
     newline();
+
+    // loop through internal statements
     incIndent();
     for (Stmt s : node.stmts) {
       write(indent());
@@ -91,6 +95,7 @@ public class PrintVisitor implements Visitor {
       newline();
     }
     decIndent();
+
     write("}");
     newline();
     newline();
@@ -99,6 +104,8 @@ public class PrintVisitor implements Visitor {
   public void visit(StructDef node) {
     write("struct " + node.structName.lexeme + " {");
     newline();
+
+    // loop through fields
     incIndent();
     List<VarDef> fields = node.fields;
     for (int i = 0; i < fields.size(); i++) {
@@ -111,6 +118,7 @@ public class PrintVisitor implements Visitor {
       newline();
     }
     decIndent();
+
     write("}");
     newline();
     newline();
@@ -126,6 +134,7 @@ public class PrintVisitor implements Visitor {
 
   public void visit(VarDef node) {
     write(node.varName.lexeme + ": ");
+
     if (node.dataType.isArray) {
       write("[" + node.dataType.type.lexeme + "]");
     }
@@ -142,13 +151,18 @@ public class PrintVisitor implements Visitor {
 
   public void visit(VarStmt node) {
     write("var " + node.varName.lexeme);
+
+    // check if a datatype is given
     if (node.dataType.isPresent()) {
+      // check if its an array
       if (node.dataType.get().isArray) {
         write(": [" + node.dataType.get().type.lexeme + "]");
       } else {
         write(": " + node.dataType.get().type.lexeme);
       }
     }
+
+    // check if there's also an assignment at time of decl
     if (node.expr.isPresent()) {
       write(" = ");
       node.expr.get().accept(this);
@@ -156,10 +170,12 @@ public class PrintVisitor implements Visitor {
   }
 
   public void visit(AssignStmt node) {
+    // loop through the left side
     List<VarRef> lvalue = node.lvalue;
     for (int i = 0; i < lvalue.size(); i++) {
       VarRef v = lvalue.get(i);
       write(v.varName.lexeme);
+      // check if it's an array
       if (v.arrayExpr.isPresent()) {
         write("[");
         v.arrayExpr.get().accept(this);
@@ -169,6 +185,7 @@ public class PrintVisitor implements Visitor {
         write(".");
       }
     }
+
     write(" = ");
     node.expr.accept(this);
   }
@@ -178,6 +195,8 @@ public class PrintVisitor implements Visitor {
     node.condition.accept(this);
     write(" {");
     newline();
+
+    // loop through internal statements
     incIndent();
     for (Stmt s : node.stmts) {
       write(indent());
@@ -185,6 +204,7 @@ public class PrintVisitor implements Visitor {
       newline();
     }
     decIndent();
+
     write(indent() + "}");
   }
 
@@ -195,6 +215,8 @@ public class PrintVisitor implements Visitor {
     node.toExpr.accept(this);
     write(" {");
     newline();
+
+    // loop through internal statements
     incIndent();
     for (Stmt s : node.stmts) {
       write(indent());
@@ -202,6 +224,7 @@ public class PrintVisitor implements Visitor {
       newline();
     }
     decIndent();
+
     write(indent() + "}");
   }
 
@@ -210,6 +233,8 @@ public class PrintVisitor implements Visitor {
     node.condition.accept(this);
     write(" {");
     newline();
+
+    // loop through internal statements
     incIndent();
     for (Stmt s : node.ifStmts) {
       write(indent());
@@ -217,12 +242,17 @@ public class PrintVisitor implements Visitor {
       newline();
     }
     decIndent();
+
     write(indent() + "}");
+
+    // check for else ifs
     if (node.elseIf.isPresent()) {
       newline();
       write(indent() + "else ");
       node.elseIf.get().accept(this);
     }
+
+    // check for else
     if (node.elseStmts.isPresent()) {
       newline();
       write(indent() + "else {");
@@ -260,6 +290,8 @@ public class PrintVisitor implements Visitor {
 
   public void visit(CallRValue node) {
     write(node.funName.lexeme + "(");
+
+    // loop through arguments
     List<Expr> args = node.args;
     for (int i = 0; i < args.size(); i++) {
       args.get(i).accept(this);
@@ -267,10 +299,12 @@ public class PrintVisitor implements Visitor {
         write(", ");
       }
     }
+
     write(")");
   }
 
   public void visit(SimpleRValue node) {
+    // print strings with (") surrounding
     if (node.literal.tokenType.equals(TokenType.STRING_VAL)) {
       write("\"" + node.literal.lexeme + "\"");
     } else {
@@ -280,6 +314,8 @@ public class PrintVisitor implements Visitor {
 
   public void visit(NewStructRValue node) {
     write("new " + node.structName.lexeme + "(");
+
+    // loop through arguments passed to the struct initialization
     List<Expr> args = node.args;
     for (int i = 0; i < node.args.size(); i++) {
       args.get(i).accept(this);
@@ -287,6 +323,7 @@ public class PrintVisitor implements Visitor {
         write(", ");
       }
     }
+
     write(")");
   }
 
@@ -297,10 +334,12 @@ public class PrintVisitor implements Visitor {
   }
 
   public void visit(VarRValue node) {
+    // looping through the right hand side
     List<VarRef> path = node.path;
     for (int i = 0; i < path.size(); i++) {
       VarRef v = path.get(i);
       write(v.varName.lexeme);
+      // check if it's an array
       if (v.arrayExpr.isPresent()) {
         write("[");
         v.arrayExpr.get().accept(this);
