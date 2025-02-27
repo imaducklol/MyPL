@@ -82,7 +82,7 @@ public class ASTParser {
 
   /**
    * Advance to next token if current token matches the given token type.
-   * @param targetType The token type to check against.
+   * @param targetTokenType The token type to check against.
    */
   private void eat(TokenType targetTokenType, String msg) {
     if (!match(targetTokenType))
