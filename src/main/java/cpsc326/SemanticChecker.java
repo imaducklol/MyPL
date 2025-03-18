@@ -126,7 +126,57 @@ public class SemanticChecker implements Visitor {
    * Checks structs for duplicate fields and valid data types
    */
   public void visit(StructDef node) {
-    // TODO ... 
+
+  }
+  public void visit(DataType node) {
+
+  }
+  public void visit(VarDef node) {
+
+  }
+  // statements
+  public void visit(ReturnStmt node) {
+
+  }
+  public void visit(VarStmt node) {
+
+  }
+  public void visit(AssignStmt node) {
+
+  }
+  public void visit(WhileStmt node) {
+
+  }
+  public void visit(ForStmt node) {
+
+  }
+  public void visit(IfStmt node) {
+
+  }
+  // expressions
+  public void visit(BasicExpr node) {
+
+  }
+  public void visit(UnaryExpr node) {
+
+  }
+  public void visit(BinaryExpr node) {
+
+  }
+  public void visit(CallRValue node) {
+
+  }
+  public void visit(SimpleRValue node) {
+
+  }
+  public void visit(NewStructRValue node) {
+
+  }
+  public void visit(NewArrayRValue node) {
+
+  }
+  public void visit(VarRValue node) {
+
   }
   
   // TODO: Finish the remaining visit functions
