@@ -100,12 +100,18 @@ public class SemanticChecker implements Visitor {
     // 2. record each function definition and check for duplicate names
     // 3. check for a main function
     // 4. check each struct
+
+    // check each struct
     for (StructDef s : node.structs) {
       s.accept(this);
     }
     // check each function
     for (FunDef f : node.functions) {
       f.accept(this);
+    }
+    // check for main
+    if (!functions.containsKey("main")) {
+      error("No function 'main' found");
     }
   }
   
@@ -115,6 +121,20 @@ public class SemanticChecker implements Visitor {
    */
   public void visit(FunDef node) {
     String funName = node.funName.lexeme;
+    // create the mapping
+    functions.put(funName, node);
+    // push environment for function context
+    symbolTable.pushEnvironment();
+    // process all the parameters
+    for (VarDef param : node.params) {
+      param.accept(this);
+    }
+    // process all the statements
+    for (Stmt stmt : node.stmts) {
+      stmt.accept(this);
+    }
+    // pop environment to leave function context
+    symbolTable.popEnvironment();
     // 1. check signature if it is main
     // 2. add an environment for params
     // 3. check and add the params (no duplicate param var names)
