@@ -2,7 +2,7 @@
  * CPSC 326, Spring 2025
  * The Simple Parser implementation.
  *
- * PUT YOUR NAME HERE IN PLACE OF THIS TEXT
+ * Orion Hess
  */
 
 package cpsc326;

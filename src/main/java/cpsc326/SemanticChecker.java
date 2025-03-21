@@ -2,17 +2,13 @@
  * CPSC 326, Spring 2025
  * The Semantic Checker implementation.
  * 
- * PUT YOUR NAME HERE IN PLACE OF THIS TEXT
+ * Orion Hess
  */
 
 
 package cpsc326;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 
 public class SemanticChecker implements Visitor {
@@ -125,6 +121,7 @@ public class SemanticChecker implements Visitor {
     functions.put(funName, node);
     // push environment for function context
     symbolTable.pushEnvironment();
+
     // process all the parameters
     for (VarDef param : node.params) {
       param.accept(this);
@@ -135,6 +132,9 @@ public class SemanticChecker implements Visitor {
     }
     // pop environment to leave function context
     symbolTable.popEnvironment();
+    // set return type
+    currType = node.returnType;
+
     // 1. check signature if it is main
     // 2. add an environment for params
     // 3. check and add the params (no duplicate param var names)
@@ -146,8 +146,17 @@ public class SemanticChecker implements Visitor {
    * Checks structs for duplicate fields and valid data types
    */
   public void visit(StructDef node) {
-
+    String structName = node.structName.lexeme;
+    structs.put(structName, node);
+    List<String> names = new ArrayList<>();
+    for (var field : node.fields) {
+      if (names.contains(field.varName.lexeme)) {
+        error("Duplicate field in struct definition", node.structName);
+      }
+      names.add(field.varName.lexeme);
+    }
   }
+
   public void visit(DataType node) {
 
   }
@@ -175,10 +184,14 @@ public class SemanticChecker implements Visitor {
   }
   // expressions
   public void visit(BasicExpr node) {
-
+    node.rvalue.accept(this);
   }
-  public void visit(UnaryExpr node) {
 
+  public void visit(UnaryExpr node) {
+    node.expr.accept(this);
+    if (!currType.type.lexeme.equals("bool")) {
+      error("UnaryExpr expected to be bool", node.unaryOp);
+    }
   }
   public void visit(BinaryExpr node) {
 
@@ -186,9 +199,27 @@ public class SemanticChecker implements Visitor {
   public void visit(CallRValue node) {
 
   }
-  public void visit(SimpleRValue node) {
 
+  /**
+   * sets return type for right side
+   */
+  public void visit(SimpleRValue node) {
+    TokenType literalType = node.literal.tokenType;
+    int line = node.literal.line;
+    int column = node.literal.column;
+    Token typeToken = null;
+    switch (literalType) {
+      case TokenType.INT_VAL -> typeToken = new Token(TokenType.INT_TYPE, "int", line, column);
+      case TokenType.DOUBLE_VAL -> typeToken = new Token(TokenType.DOUBLE_TYPE, "double", line, column);
+      case TokenType.BOOL_VAL -> typeToken = new Token(TokenType.BOOL_TYPE, "bool", line, column);
+      case TokenType.STRING_VAL -> typeToken = new Token(TokenType.STRING_TYPE, "string", line, column);
+      case TokenType.NULL_VAL -> typeToken = new Token(TokenType.VOID_TYPE, "null", line, column);
+    }
+    currType = new DataType();
+    currType.type = typeToken;
+    // TODO Deal with arrays
   }
+
   public void visit(NewStructRValue node) {
 
   }
@@ -198,7 +229,4 @@ public class SemanticChecker implements Visitor {
   public void visit(VarRValue node) {
 
   }
-  
-  // TODO: Finish the remaining visit functions
-  
 }
