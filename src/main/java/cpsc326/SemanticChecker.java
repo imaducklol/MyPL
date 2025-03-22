@@ -173,13 +173,6 @@ public class SemanticChecker implements Visitor {
     if (!(isBaseType(type.lexeme) || structs.containsKey(type.lexeme) || type.tokenType == TokenType.VOID_TYPE)) {
       error("Undefined return type", node.returnType.type);
     }
-
-
-    // 1. check signature if it is main
-    // 2. add an environment for params
-    // 3. check and add the params (no duplicate param var names)
-    // 4. add the return type
-    // 5. check the body statements
   }
 
   /**
@@ -256,69 +249,52 @@ public class SemanticChecker implements Visitor {
   }
 
   public void visit(AssignStmt node) {
-    VarRef parent = null;
-    VarRef var = null;
-    for (VarRef varRef : node.lvalue) {
-      // validate any arrayExprs
-      if (varRef.arrayExpr.isPresent()) {
-        varRef.arrayExpr.get().accept(this);
-        if (currType.type.tokenType != TokenType.INT_TYPE || currType.isArray) {
-          error("Array expression must resolve in an int", varRef.varName);
-        }
-      }
-      // initially
-      if (var == null) {
-        if (!symbolTable.exists(varRef.varName.lexeme)) {
-          error("Variable is not defined in current context", varRef.varName);
-        }
-        var = varRef;
-        continue;
-      }
-      // clear if passed though
-      parent = var;
-      var = varRef;
-      // check if previous wasn't a struct
-      if (parent.varName.tokenType != TokenType.ID) {
-        error("Cannot get field of non-struct variable", varRef.varName);
-      }
-      // check if struct actually had proper field
-      if (!isStructField(varRef.varName.lexeme, structs.get(symbolTable.get(parent.varName.lexeme).type.lexeme))) {
-        error("Not a valid field of struct", varRef.varName);
-      }
+    VarRef first = node.lvalue.getFirst();
+    var firstName = first.varName.lexeme;
+    // check if it exists
+    if (!symbolTable.exists(firstName)) error("Variable not declared", first.varName);
+    // extra statements to ensure clone not reference
+    DataType current = new DataType();
+    current.type = symbolTable.get(first.varName.lexeme).type;
+    current.isArray = symbolTable.get(first.varName.lexeme).isArray;
+    // process arrayExpr if present for first
+    if (first.arrayExpr.isPresent()) {
+      first.arrayExpr.get().accept(this);
+      current.isArray = false;
+      if (currType.type.tokenType != TokenType.INT_TYPE) error("Array expr must resolve to int", first.varName);
     }
-    // assert that nothing failed above
-    assert var != null;
-    Token varToken = var.varName;
-    DataType type = new DataType();
-    // get proper type
-    if (parent != null) {
-      DataType fieldType = getStructFieldType(varToken.lexeme, structs.get(symbolTable.get(parent.varName.lexeme).type.lexeme));
-      type.type = new Token(fieldType.type.tokenType, varToken.lexeme, varToken.line, varToken.column);
-    } else {
-      if (varToken.tokenType == TokenType.ID) {
-        type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, symbolTable.get(varToken.lexeme).type.lexeme, varToken.line, varToken.column);
-      } else {
-        type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, varToken.lexeme, varToken.line, varToken.column);
-      }
-    }
-    // get isArray
-    if (parent == null) {
-      if (symbolTable.get(varToken.lexeme).isArray) {
-        type.isArray = var.arrayExpr.isEmpty();
-      } else {
-        type.isArray = false;
-      }
-    } else {
-      if (getStructFieldType(varToken.lexeme, structs.get(symbolTable.get(parent.varName.lexeme).type.lexeme)).isArray) {
-        type.isArray = var.arrayExpr.isEmpty();
-      } else {
-        type.isArray = false;
+
+    boolean firstDone = true;
+    for (VarRef var : node.lvalue) {
+      if (firstDone) { firstDone = false; continue;}
+      // if this is hit, the previous var was an array that needed to be dereferenced
+      if (current.isArray) error("Failed to dereference array", var.varName);
+
+      String curName = current.type.lexeme;
+      String varName = var.varName.lexeme;
+      // check if parent is a struct that could have fields
+      if (!structs.containsKey(current.type.lexeme)) error("Not a struct, cannot get fields", current.type);
+      // check if parent does have var as a field
+      if (!isStructField(varName, structs.get(curName))) error("Struct does not have field", var.varName);
+
+      // update current
+      current = new DataType();
+      current.type = getStructFieldType(varName, structs.get(curName)).type;
+      current.isArray = getStructFieldType(varName, structs.get(curName)).isArray;
+
+      // process arrayExpr if present
+      if (var.arrayExpr.isPresent() && !current.isArray) error("Array access on non array type", var.varName);
+      if (var.arrayExpr.isPresent()) {
+        var.arrayExpr.get().accept(this);
+        current.isArray = false;
+        if (currType.type.tokenType != TokenType.INT_TYPE) error("Array expr must resolve to int", var.varName);
       }
     }
 
     // return
-    currType = type;
-    DataType lval = currType;//symbolTable.get(node.lvalue.getLast().varName.lexeme);
+    currType = current;
+
+    DataType lval = currType;
     node.expr.accept(this);
     DataType rval = currType;
     if ((lval.type.tokenType != rval.type.tokenType || lval.isArray != rval.isArray) && rval.type.tokenType != TokenType.VOID_TYPE) {
@@ -408,7 +384,6 @@ public class SemanticChecker implements Visitor {
   }
 
   public void visit(BinaryExpr node) {
-    // lhs
     node.lhs.accept(this);
     DataType lhsType = currType;
     node.rhs.accept(this);
@@ -642,73 +617,54 @@ public class SemanticChecker implements Visitor {
 
   public void visit(NewArrayRValue node) {
     node.arrayExpr.accept(this);
-    currType.type.tokenType = node.type.tokenType;
-    currType.type.lexeme = node.type.lexeme;
+    currType.type = node.type;
     currType.isArray = true;
   }
 
   public void visit(VarRValue node) {
-    VarRef parent = null;
-    VarRef var = null;
-    for (VarRef varRef : node.path) {
-      // validate any arrayExprs
-      if (varRef.arrayExpr.isPresent()) {
-        varRef.arrayExpr.get().accept(this);
-        if (currType.type.tokenType != TokenType.INT_TYPE || currType.isArray) {
-          error("Array expression must resolve in an int", varRef.varName);
-        }
-      }
-      // initially
-      if (var == null) {
-        if (!symbolTable.exists(varRef.varName.lexeme)) {
-          error("Variable is not defined in current context", varRef.varName);
-        }
-        var = varRef;
-        continue;
-      }
-      // clear if passed though
-      parent = var;
-      var = varRef;
-      // check if previous wasn't a struct
-      if (parent.varName.tokenType != TokenType.ID) {
-        error("Cannot get field of non-struct variable", varRef.varName);
-      }
-      // check if struct actually had proper field
-      if (!isStructField(varRef.varName.lexeme, structs.get(symbolTable.get(parent.varName.lexeme).type.lexeme))) {
-        error("Not a valid field of struct", varRef.varName);
-      }
+    VarRef first = node.path.getFirst();
+    var firstName = first.varName.lexeme;
+    // check if it exists
+    if (!symbolTable.exists(firstName)) error("Variable not declared", first.varName);
+    // extra statements to ensure clone not reference
+    DataType current = new DataType();
+    current.type = symbolTable.get(first.varName.lexeme).type;
+    current.isArray = symbolTable.get(first.varName.lexeme).isArray;
+    // process arrayExpr if present for first
+    if (first.arrayExpr.isPresent()) {
+      first.arrayExpr.get().accept(this);
+      current.isArray = false;
+      if (currType.type.tokenType != TokenType.INT_TYPE) error("Array expr must resolve to int", first.varName);
     }
-    // assert that nothing failed above
-    assert var != null;
-    Token varToken = var.varName;
-    DataType type = new DataType();
-    // get proper type
-    if (parent != null) {
-      DataType fieldType = getStructFieldType(varToken.lexeme, structs.get(symbolTable.get(parent.varName.lexeme).type.lexeme));
-      type.type = new Token(fieldType.type.tokenType, varToken.lexeme, varToken.line, varToken.column);
-    } else {
-      if (varToken.tokenType == TokenType.ID) {
-        type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, symbolTable.get(varToken.lexeme).type.lexeme, varToken.line, varToken.column);
-      } else {
-        type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, varToken.lexeme, varToken.line, varToken.column);
-      }
-    }
-    // get isArray
-    if (parent == null) {
-      if (symbolTable.get(varToken.lexeme).isArray) {
-        type.isArray = var.arrayExpr.isEmpty();
-      } else {
-        type.isArray = false;
-      }
-    } else {
-      if (getStructFieldType(varToken.lexeme, structs.get(symbolTable.get(parent.varName.lexeme).type.lexeme)).isArray) {
-        type.isArray = var.arrayExpr.isEmpty();
-      } else {
-        type.isArray = false;
+
+    boolean firstDone = true;
+    for (VarRef var : node.path) {
+      if (firstDone) { firstDone = false; continue;}
+      // if this is hit, the previous var was an array that needed to be dereferenced
+      if (current.isArray) error("Failed to dereference array", var.varName);
+
+      String curName = current.type.lexeme;
+      String varName = var.varName.lexeme;
+      // check if parent is a struct that could have fields
+      if (!structs.containsKey(current.type.lexeme)) error("Not a struct, cannot get fields", current.type);
+      // check if parent does have var as a field
+      if (!isStructField(varName, structs.get(curName))) error("Struct does not have field", var.varName);
+
+      // update current
+      current = new DataType();
+      current.type = getStructFieldType(varName, structs.get(curName)).type;
+      current.isArray = getStructFieldType(varName, structs.get(curName)).isArray;
+
+      // process arrayExpr if present
+      if (var.arrayExpr.isPresent() && !current.isArray) error("Array access on non array type", var.varName);
+      if (var.arrayExpr.isPresent()) {
+        var.arrayExpr.get().accept(this);
+        current.isArray = false;
+        if (currType.type.tokenType != TokenType.INT_TYPE) error("Array expr must resolve to int", var.varName);
       }
     }
 
     // return
-    currType = type;
+    currType = current;
   }
 }

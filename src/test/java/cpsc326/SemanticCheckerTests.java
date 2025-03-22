@@ -2047,7 +2047,6 @@ class SemanticCheckerTests {
       """;
     Program r = new ASTParser(new Lexer(istream(p))).parse();
     SemanticChecker c = new SemanticChecker();
-    r.accept(c);
     Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
     assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
   }
@@ -2149,6 +2148,110 @@ class SemanticCheckerTests {
   // 2. Three new "negative" tests. Each test should involve an
   //    "interesting" case.
   //----------------------------------------------------------------------  
-  
-  
+
+  @Test
+  void dereferenceNonStruct() {
+    var p =
+            """
+            struct s {val: double, val2: double}
+            void main() {
+              var p: s = new s(null, null)
+              var x: double = p.val.val2
+            }
+            """;
+    Program r = new ASTParser(new Lexer(istream(p))).parse();
+    SemanticChecker c = new SemanticChecker();
+    Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
+    assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
+  }
+
+  @Test
+  void dereferenceNonExtantField() {
+    var p =
+            """
+            struct s {val: double, val2: double}
+            void main() {
+              var p: s = new s(null, null)
+              var x: double = p.val3
+            }
+            """;
+    Program r = new ASTParser(new Lexer(istream(p))).parse();
+    SemanticChecker c = new SemanticChecker();
+    Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
+    assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
+  }
+
+  @Test
+  void arrayAccessOnNonArrayInStruct() {
+    var p =
+            """
+            struct s {val: double, val2: double}
+            void main() {
+              var p: s = new s(null, null)
+              var x: double = p.val[10]
+            }
+            """;
+    Program r = new ASTParser(new Lexer(istream(p))).parse();
+    SemanticChecker c = new SemanticChecker();
+    Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
+    assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
+  }
+
+  @Test
+  void arrayAccessOfNonIntPathExpr() {
+    var p =
+            """
+            struct s {val: [double], val2: double}
+            void main() {
+              var p: s = new s(null, null)
+              var x: double = p.val[0.5]
+            }
+            """;
+    Program r = new ASTParser(new Lexer(istream(p))).parse();
+    SemanticChecker c = new SemanticChecker();
+    Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
+    assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
+  }
+
+  @Test
+  void arrayAccessOfNonInt() {
+    var p =
+            """
+            struct s {val: [double], val2: double}
+            void main() {
+              var p: [s] = new s[10]
+              var x: s = p[0.5]
+            }
+            """;
+    Program r = new ASTParser(new Lexer(istream(p))).parse();
+    SemanticChecker c = new SemanticChecker();
+    Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
+    assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
+  }
+
+  @Test
+  void arrayMain() {
+    var p =
+            """
+            [void] main() {}
+            """;
+    Program r = new ASTParser(new Lexer(istream(p))).parse();
+    SemanticChecker c = new SemanticChecker();
+    Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
+    assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
+  }
+
+  @Test
+  void unableToInfer() {
+    var p =
+            """
+            void main() {
+            x = 1
+            }
+            """;
+    Program r = new ASTParser(new Lexer(istream(p))).parse();
+    SemanticChecker c = new SemanticChecker();
+    Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
+    assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
+  }
 }
