@@ -232,6 +232,12 @@ public class SemanticChecker implements Visitor {
       if ((node.dataType.get().type.tokenType != currType.type.tokenType || node.dataType.get().isArray != currType.isArray) && currType.type.tokenType != TokenType.VOID_TYPE) {
         error("Mismatched types in variable statement", node.varName);
       }
+      // check if it's a struct type
+      else if (node.dataType.get().type.tokenType == TokenType.ID) {
+        if (!node.dataType.get().type.lexeme.equals(currType.type.lexeme)) {
+          error("Mismatched struct types in variable statement", node.varName);
+        }
+      }
       type = node.dataType.get();
     } else if (node.dataType.isPresent()) {
       type = node.dataType.get();
@@ -250,11 +256,61 @@ public class SemanticChecker implements Visitor {
   }
 
   public void visit(AssignStmt node) {
-    DataType lval = symbolTable.get(node.lvalue.getLast().varName.lexeme);
+    VarRef parent = null;
+    VarRef var = null;
+    for (VarRef varRef : node.lvalue) {
+      // validate any arrayExprs
+      if (varRef.arrayExpr.isPresent()) {
+        varRef.arrayExpr.get().accept(this);
+        if (currType.type.tokenType != TokenType.INT_TYPE || currType.isArray) {
+          error("Array expression must resolve in an int", varRef.varName);
+        }
+      }
+      // initially
+      if (var == null) {
+        if (!symbolTable.exists(varRef.varName.lexeme)) {
+          error("Variable is not defined in current context", varRef.varName);
+        }
+        var = varRef;
+        continue;
+      }
+      // check if previous wasn't a struct
+      if (var.varName.tokenType != TokenType.ID) {
+        error("Cannot get field of non-struct variable", varRef.varName);
+      }
+      // check if struct actually had proper field
+      if (!isStructField(varRef.varName.lexeme, structs.get(var.varName.lexeme))) {
+        error("Not a valid field of struct", varRef.varName);
+      }
+      // clear if passed though
+      parent = var;
+      var = varRef;
+    }
+    Token varToken = var.varName;
+    DataType type = new DataType();
+    type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, varToken.lexeme, varToken.line, varToken.column);
+    // Check if there even was a parent
+    // If parent has child as an arrayType, check if it was accessed with arrayExpr
+    if (parent == null) {
+      if (symbolTable.get(varToken.lexeme).isArray) {
+        type.isArray = var.arrayExpr.isEmpty();
+      } else {
+        type.isArray = false;
+      }
+    } else {
+      if (getStructFieldType(varToken.lexeme, structs.get(parent.varName.lexeme)).isArray) {
+        type.isArray = var.arrayExpr.isEmpty();
+      } else {
+        type.isArray = false;
+      }
+    }
+
+    currType = type;
+    DataType lval = currType;//symbolTable.get(node.lvalue.getLast().varName.lexeme);
     node.expr.accept(this);
     DataType rval = currType;
     if ((lval.type.tokenType != rval.type.tokenType || lval.isArray != rval.isArray) && rval.type.tokenType != TokenType.VOID_TYPE) {
-      error("Mismatched types in variable statement", node.lvalue.getLast().varName);
+      error("Mismatched types in assign statement", node.lvalue.getLast().varName);
     }
 
   }
@@ -270,6 +326,8 @@ public class SemanticChecker implements Visitor {
     for (Stmt stmt : node.stmts) {
       stmt.accept(this);
     }
+    // cleanup
+    symbolTable.popEnvironment();
   }
 
   public void visit(ForStmt node) {
@@ -294,6 +352,8 @@ public class SemanticChecker implements Visitor {
     for (Stmt stmt : node.stmts) {
       stmt.accept(this);
     }
+    // cleanup
+    symbolTable.popEnvironment();
   }
 
   public void visit(IfStmt node) {
@@ -429,8 +489,8 @@ public class SemanticChecker implements Visitor {
             error("Wrong number of arguments supplied, expected 1", node.funName);
           }
           node.args.getFirst().accept(this);
-          if (currType.isArray) {
-            error("Print cannot accept array types", node.funName);
+          if (currType.isArray || currType.type.tokenType == TokenType.ID) {
+            error("Print cannot accept array or struct types", node.funName);
           }
           // process function return type
           currType = new DataType();
@@ -444,7 +504,7 @@ public class SemanticChecker implements Visitor {
             error("Wrong number of arguments supplied, expected 1", node.funName);
           }
           node.args.getFirst().accept(this);
-          if (currType.isArray) {
+          if (currType.isArray || currType.type.tokenType == TokenType.ID) {
             error("Println cannot accept array types", node.funName);
           }
           // process function return type
@@ -565,7 +625,7 @@ public class SemanticChecker implements Visitor {
     }
     // process new struct return type
     currType = new DataType();
-    currType.type = new Token(TokenType.STRUCT, struct.structName.lexeme, node.structName.line, node.structName.column);
+    currType.type = new Token(TokenType.ID, struct.structName.lexeme, node.structName.line, node.structName.column);
   }
 
   public void visit(NewArrayRValue node) {
@@ -576,17 +636,56 @@ public class SemanticChecker implements Visitor {
   }
 
   public void visit(VarRValue node) {
+    VarRef parent = null;
     VarRef var = null;
     for (VarRef varRef : node.path) {
+      // validate any arrayExprs
+      if (varRef.arrayExpr.isPresent()) {
+        varRef.arrayExpr.get().accept(this);
+        if (currType.type.tokenType != TokenType.INT_TYPE || currType.isArray) {
+          error("Array expression must resolve in an int", varRef.varName);
+        }
+      }
+      // initially
+      if (var == null) {
+        if (!symbolTable.exists(varRef.varName.lexeme)) {
+          error("Variable is not defined in current context", varRef.varName);
+        }
+        var = varRef;
+        continue;
+      }
+      // check if previous wasn't a struct
+      if (var.varName.tokenType != TokenType.ID) {
+        error("Cannot get field of non-struct variable", varRef.varName);
+      }
+      // check if struct actually had proper field
+      if (!isStructField(varRef.varName.lexeme, structs.get(symbolTable.get(var.varName.lexeme).type.lexeme))) {
+        error("Not a valid field of struct", varRef.varName);
+      }
+      // clear if passed though
+      parent = var;
       var = varRef;
     }
+    assert var != null;
     Token varToken = var.varName;
     DataType type = new DataType();
-    if (!symbolTable.exists(varToken.lexeme)) {
-      error("Variable is not defined in current context", varToken);
+    type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, symbolTable.get(varToken.lexeme).type.lexeme, varToken.line, varToken.column);
+    // Check if there even was a parent
+    // If parent has child as an arrayType, check if it was accessed with arrayExpr
+    if (parent == null) {
+      if (symbolTable.get(varToken.lexeme).isArray) {
+        type.isArray = var.arrayExpr.isEmpty();
+      } else {
+        type.isArray = false;
+      }
+    } else {
+      if (getStructFieldType(varToken.lexeme, structs.get(parent.varName.lexeme)).isArray) {
+        type.isArray = var.arrayExpr.isEmpty();
+      } else {
+        type.isArray = false;
+      }
     }
-    type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, varToken.lexeme, varToken.line, varToken.column);
-    type.isArray = symbolTable.get(varToken.lexeme).isArray;
+
     currType = type;
   }
 }

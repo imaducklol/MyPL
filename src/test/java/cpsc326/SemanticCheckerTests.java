@@ -2047,6 +2047,7 @@ class SemanticCheckerTests {
       """;
     Program r = new ASTParser(new Lexer(istream(p))).parse();
     SemanticChecker c = new SemanticChecker();
+    r.accept(c);
     Exception e = assertThrows(MyPLException.class, () -> r.accept(c));
     assertTrue(e.getMessage().startsWith("STATIC_ERROR: "));
   }
