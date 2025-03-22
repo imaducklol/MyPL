@@ -274,17 +274,17 @@ public class SemanticChecker implements Visitor {
         var = varRef;
         continue;
       }
-      // check if previous wasn't a struct
-      if (var.varName.tokenType != TokenType.ID) {
-        error("Cannot get field of non-struct variable", varRef.varName);
-      }
-      // check if struct actually had proper field
-      if (!isStructField(varRef.varName.lexeme, structs.get(var.varName.lexeme))) {
-        error("Not a valid field of struct", varRef.varName);
-      }
       // clear if passed though
       parent = var;
       var = varRef;
+      // check if previous wasn't a struct
+      if (parent.varName.tokenType != TokenType.ID) {
+        error("Cannot get field of non-struct variable", varRef.varName);
+      }
+      // check if struct actually had proper field
+      if (!isStructField(varRef.varName.lexeme, structs.get(parent.varName.lexeme))) {
+        error("Not a valid field of struct", varRef.varName);
+      }
     }
     Token varToken = var.varName;
     DataType type = new DataType();
@@ -666,12 +666,18 @@ public class SemanticChecker implements Visitor {
       parent = var;
       var = varRef;
     }
+    // assert that nothing failed above
     assert var != null;
     Token varToken = var.varName;
     DataType type = new DataType();
-    type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, symbolTable.get(varToken.lexeme).type.lexeme, varToken.line, varToken.column);
-    // Check if there even was a parent
-    // If parent has child as an arrayType, check if it was accessed with arrayExpr
+    // get proper type
+    if (parent != null) {
+      DataType fieldType = getStructFieldType(varToken.lexeme, structs.get(parent.varName.lexeme));
+      type.type = new Token(fieldType.type.tokenType, varToken.lexeme, varToken.line, varToken.column);
+    } else {
+      type.type = new Token(symbolTable.get(varToken.lexeme).type.tokenType, varToken.lexeme, varToken.line, varToken.column);
+    }
+    // get isArray
     if (parent == null) {
       if (symbolTable.get(varToken.lexeme).isArray) {
         type.isArray = var.arrayExpr.isEmpty();
@@ -686,6 +692,7 @@ public class SemanticChecker implements Visitor {
       }
     }
 
+    // return
     currType = type;
   }
 }
