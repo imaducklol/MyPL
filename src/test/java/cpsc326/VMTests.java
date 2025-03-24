@@ -1,7 +1,8 @@
 /**
  * CPSC 326, Spring 2025
- * Basic VM tests.
+ * Basic VM Tests.
  */
+
 
 package cpsc326;
 
@@ -15,9 +16,6 @@ import java.io.PrintStream;
 import java.io.ByteArrayOutputStream;
 
 
-/**
- * Unit tests for the VM implementation
- */
 class VMTests {
 
   private PrintStream stdout = System.out;
@@ -235,7 +233,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test
   void nullSubSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
@@ -288,7 +287,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test
   void nullMulSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
@@ -341,7 +341,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test
   void nullDivSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
@@ -354,10 +355,11 @@ class VMTests {
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
 
+  @Test  
   void intDivByZero() {
     VMFrameTemplate m = new VMFrameTemplate("main");
-    m.add(VMInstr.PUSH(0));
     m.add(VMInstr.PUSH(2));
+    m.add(VMInstr.PUSH(0));
     m.add(VMInstr.DIV());
     m.add(VMInstr.WRITE());
     VM vm = new VM();
@@ -366,10 +368,11 @@ class VMTests {
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
 
+  @Test  
   void dblDivByZero() {
     VMFrameTemplate m = new VMFrameTemplate("main");
-    m.add(VMInstr.PUSH(0));
     m.add(VMInstr.PUSH(1.5));
+    m.add(VMInstr.PUSH(0.0));
     m.add(VMInstr.DIV());
     m.add(VMInstr.WRITE());
     VM vm = new VM();
@@ -417,7 +420,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test  
   void andNullSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(true));
@@ -469,7 +473,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test  
   void orNullSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(true));
@@ -588,7 +593,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test  
   void lessThanNullSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
@@ -678,7 +684,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test  
   void lessThanEqualNullSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
@@ -768,7 +775,8 @@ class VMTests {
     vm.run();
     assertEquals("false", output.toString());
   }
-  
+
+  @Test  
   void equalNullSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
@@ -871,7 +879,8 @@ class VMTests {
     vm.run();
     assertEquals("true", output.toString());
   }
-  
+
+  @Test  
   void notEqualNullSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
@@ -1692,14 +1701,5 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-
-  //----------------------------------------------------------------------
-  // TODO: Design and implement the following unit tests and add them
-  // below. Make sure your added unit tests pass.
-  //
-  // 1. Five new interesting "positive" tests that involve
-  //    combinations of instructions. 
-  //----------------------------------------------------------------------  
-
   
 }
