@@ -180,7 +180,8 @@ class VMTests {
     Exception e = assertThrows(MyPLException.class, () -> vm.run());
     assertTrue(e.getMessage().startsWith("VM_ERROR: "));
   }
-  
+
+  @Test
   void nullAddSecondOperand() {
     VMFrameTemplate m = new VMFrameTemplate("main");
     m.add(VMInstr.PUSH(1));
