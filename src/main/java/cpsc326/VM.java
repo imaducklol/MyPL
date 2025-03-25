@@ -412,6 +412,7 @@ public class VM {
         // pop string x, push length(x) if str, else push obj(x).length
         case LEN -> {
           Object x = operandStack.pop();
+          if (x.equals(VM.NULL)) error("LEN called with null argument", frame);
           if (x instanceof String) {
             operandStack.push(((String) x).length());
           } else {
@@ -422,14 +423,43 @@ public class VM {
         case GETC -> {
           Object x = operandStack.pop();
           Object y = operandStack.pop();
-          operandStack.push(arrayHeap.get((int) y).get((int) x));
+          if (y.equals(VM.NULL) || x.equals(VM.NULL)) error("GETC called with null argument", frame);
+          if ((int) x < 0 || (int) x >= ((String) y).length()) error("GETC called with oob index", frame);
+          operandStack.push(((String) y).charAt((int) x));
         }
         // pop x, push int(x)
-        case TOINT -> operandStack.push((Integer) operandStack.pop());
+        case TOINT -> {
+          Object x = operandStack.pop();
+          if (x.equals(VM.NULL)) error("TOINT called with null argument", frame);
+          if (x instanceof String) {
+            try {
+              operandStack.push(Integer.parseInt((String) x));
+            } catch (Exception e) {
+              error("TOINT called on bad string");
+            }
+          } else if (x instanceof Double) operandStack.push(((Double) x).intValue());
+          else error("TOINT called with non String/Double type", frame);
+        }
         // pop x, push double(x)
-        case TODBL -> operandStack.push((Double) operandStack.pop());
+        case TODBL -> {
+          Object x = operandStack.pop();
+          if (x.equals(VM.NULL)) error("TODBL called with null argument", frame);
+          if (x instanceof String) {
+            try {
+              operandStack.push(Double.parseDouble((String) x));
+            } catch (Exception e) {
+              error("TODBL called on bad string");
+            }
+          } else if (x instanceof Integer) operandStack.push(((Integer) x).doubleValue());
+          else error("TODBL called with non String/Integer type", frame);
+        }
         // pop x, push str(x)
-        case TOSTR -> operandStack.push((String) operandStack.pop());
+        case TOSTR -> {
+          Object x = operandStack.pop();
+          if (x.equals(VM.NULL)) error("TOSTR called with null argument", frame);
+          if (x instanceof Double || x instanceof Integer) operandStack.push(String.valueOf(x));
+          else error("TOSTR called with non Double/Integer type", frame);
+        }
 
         //----------------------------------------------------------------------
         // heap
@@ -457,7 +487,7 @@ public class VM {
         case ALLOCA -> {
           Object x = operandStack.pop();
           List<Object> array = new ArrayList<>();
-          if (x.equals(VM.NULL) || (int) x < 1) error("ALLOCA called with bad length ( < 1 or null)", frame);
+          if (x.equals(VM.NULL) || (int) x < 0) error("ALLOCA called with bad length ( < 0 or null)", frame);
           for (int i = 0; i < (Integer) x; i++) {
             array.add(VM.NULL);
           }
