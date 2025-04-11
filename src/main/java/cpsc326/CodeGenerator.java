@@ -96,10 +96,28 @@ public class CodeGenerator implements Visitor {
    * Generates a function definition
    */
   public void visit(FunDef node) {
-    // TODO: see lecture notes
+    currTemplate = new VMFrameTemplate(node.funName.lexeme);
 
-    // NOTE: to generate the body code (for this and other
-    // statements), you can use: execBody(node.stmts)
+    varTable.pushEnvironment();
+
+    // parameters
+    for (var param : node.params) {
+      varTable.add(param.varName.lexeme);
+      add(VMInstr.STORE(varTable.get(param.varName.lexeme)));
+    }
+
+    // statements
+    execBody(node.stmts);
+
+    // add a return null if no other return statement
+    if (!(node.stmts.getLast() instanceof ReturnStmt)) {
+      add(VMInstr.PUSH(VM.NULL));
+      add(VMInstr.RET());
+    }
+
+    varTable.popEnvironment();
+
+    vm.add(currTemplate);
   }
 
   
@@ -119,7 +137,124 @@ public class CodeGenerator implements Visitor {
     // nothing to do here
   }
 
-  
+  public void visit(ReturnStmt node) {
+    node.expr.accept(this);
+    add(VMInstr.RET());
+  }
+
+  public void visit(VarStmt node) {
+    varTable.add(node.varName.lexeme);
+    if (node.expr.isPresent()) {
+      node.expr.get().accept(this);
+      add(VMInstr.STORE(varTable.get(node.varName.lexeme)));
+    }
+  }
+
+  public void visit(AssignStmt node) {
+
+  }
+
+  public void visit(WhileStmt node) {
+    int loopStart = currTemplate.instructions.size();
+    node.condition.accept(this);
+    VMInstr jump = VMInstr.JMPF(-1);
+    add(jump);
+    varTable.pushEnvironment();
+    execBody(node.stmts);
+    varTable.popEnvironment();
+    jump = VMInstr.JMPF(currTemplate.instructions.size());
+  }
+
+  public void visit(ForStmt node) {
+    // new env for the forStmt var
+    varTable.pushEnvironment();
+
+    // populate stuff for the for stmt var
+    varTable.add(node.varName.lexeme);
+    node.fromExpr.accept(this);
+    add(VMInstr.STORE(varTable.get(node.varName.lexeme)));
+
+    // loop start for the final jump
+    int loopStart = currTemplate.instructions.size();
+
+    // populate the condition code
+    add(VMInstr.LOAD(varTable.get(node.varName.lexeme)));
+    node.toExpr.accept(this);
+    add(VMInstr.CMPLE());
+    VMInstr jump = VMInstr.JMPF(-1);
+    add(jump);
+
+    // populate the body stmts
+    execBody(node.stmts);
+    varTable.popEnvironment();
+
+    // jump to the condition
+    add(VMInstr.JMP(loopStart));
+    // set the false jump to the end
+    jump = VMInstr.JMPF(currTemplate.instructions.size());
+  }
+
+  public void visit(IfStmt node) {
+    // populate the condition
+    node.condition.accept(this);
+    // jump variable to get to after the stmts
+    VMInstr jump = VMInstr.JMPF(-1);
+    add(jump);
+
+    // populate the main stmts
+    varTable.pushEnvironment();
+    execBody(node.ifStmts);
+    varTable.popEnvironment();
+
+    // set that jump var to a proper val
+    jump = VMInstr.JMPF(currTemplate.instructions.size());
+
+    // populate elseIf if present
+    node.elseIf.ifPresent(ifStmt -> ifStmt.accept(this));
+
+    // exit if there are no else stmts
+    if (!node.elseStmts.isPresent()) return;
+
+    // populate the else stmts
+    varTable.pushEnvironment();
+    execBody(node.elseStmts.get());
+    varTable.popEnvironment();
+  }
+
+  public void visit(BasicExpr node) {
+    node.rvalue.accept(this);
+  }
+
+  public void visit(UnaryExpr node) {
+    node.expr.accept(this);
+    add(VMInstr.NOT());
+  }
+
+  public void visit(BinaryExpr node) {
+
+  }
+
+  public void visit(CallRValue node) {
+
+  }
+
+  public void visit(SimpleRValue node) {
+
+  }
+
+  public void visit(NewStructRValue node) {
+
+  }
+
+  public void visit(NewArrayRValue node) {
+
+  }
+
+  public void visit(VarRValue node) {
+
+  }
+
+
   /**
    * The visitor function for data types, but not used in code generation.
    */
@@ -127,8 +262,7 @@ public class CodeGenerator implements Visitor {
     // nothing to do here
   }
 
-  
-  // TODO: Finish the remaining visit functions ... 
+
 
   
 }
