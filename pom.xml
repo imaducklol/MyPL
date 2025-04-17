@@ -48,33 +48,12 @@
         <configuration>
           <reportFormat>plain</reportFormat>
           <consoleOutputReporter>
-            <!-- <disable>true</disable> -->
             <disable>false</disable>
           </consoleOutputReporter>
         </configuration>
       </plugin>
 
-      <!-- for command line execution -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.3.0</version>
-        <executions>
-          <execution>
-            <id>Prog1</id>
-            <configuration>
-              <mainClass>cpsc326.HW5Prog1</mainClass>
-            </configuration>
-          </execution>
-          <execution>
-            <id>Prog2</id>
-            <configuration>
-              <mainClass>cpsc326.HW5Prog2</mainClass>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
+      <!-- for executable jar -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
@@ -87,8 +66,6 @@
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
           <finalName>mypl</finalName>                
-          <!--<appendAssemblyId>false</appendAssemblyId>-->
-          <!--<outputDirectory>.</outputDirectory>-->
         </configuration>
       </plugin>
     </plugins>

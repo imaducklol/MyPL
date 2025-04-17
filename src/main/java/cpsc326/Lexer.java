@@ -42,7 +42,7 @@ public class Lexer {
         } catch (IOException e) {
             error("read error", line, column + 1);
         }
-          return (char) -1;
+        return (char) -1;
     }
 
     /**
@@ -193,6 +193,16 @@ public class Lexer {
             StringBuilder string = new StringBuilder();
             ch = read();
             while (ch != '"') {
+                if (ch == '\\') {
+                    switch (ch = read()) {
+                        case 'n' -> string.append('\n');
+                        case 't' -> string.append('\t');
+                        case '\\' -> string.append('\\');
+                        default -> error("unknown escape character", line, column);
+                    }
+                    ch = read();
+                    continue;
+                }
                 if (isEOL(ch)) error("non-terminated string", line, column);
                 if (isEOF(ch)) error("non-terminated string", line, column);
                 string.append(ch);

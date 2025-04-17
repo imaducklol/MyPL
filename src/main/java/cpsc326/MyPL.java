@@ -1,6 +1,6 @@
 /**
  * CPSC 326, Spring 2025
- * The mypl driver program.
+ * The mypl driver program. 
  */
 
 package cpsc326;
@@ -47,6 +47,7 @@ public class MyPL {
       Lexer lexer = new Lexer(input);
       SimpleParser parser = new SimpleParser(lexer);
       parser.parse();
+      System.out.println("No syntax issues found");
     } catch(MyPLException e) {
       System.err.println(e.getMessage());
     }
@@ -61,8 +62,7 @@ public class MyPL {
       Lexer lexer = new Lexer(input);
       ASTParser parser = new ASTParser(lexer);
       Program p = parser.parse();
-      PrintVisitor v = new PrintVisitor();
-      p.accept(v);
+      p.accept(new PrintVisitor());
     } catch(MyPLException e) {
       System.err.println(e.getMessage());
     }
@@ -79,10 +79,10 @@ public class MyPL {
       ASTParser parser = new ASTParser(lexer);
       Program p = parser.parse();
       p.accept(new SemanticChecker());
+      System.out.println("No semantic issues found");      
     } catch(MyPLException e) {
       System.err.println(e.getMessage());
     }
-    System.out.println("No static errors found");
   }
   
   /**
@@ -91,7 +91,17 @@ public class MyPL {
    * @param input The mypl program as an input stream
    */
   private static void irMode(InputStream input) {
-    System.out.println("IR mode not yet supported");
+    try {
+      Lexer lexer = new Lexer(input);
+      ASTParser parser = new ASTParser(lexer);
+      Program p = parser.parse();
+      p.accept(new SemanticChecker());
+      VM vm = new VM();
+      p.accept(new CodeGenerator(vm));
+      System.out.println(vm);
+    } catch(MyPLException e) {
+      System.err.println(e.getMessage());
+    }
   }
 
   /**
@@ -99,7 +109,17 @@ public class MyPL {
    * @param input The mypl program as an input stream
    */
   private static void runMode(InputStream input) {
-    System.out.println("RUN mode not yet supported");
+    try {
+      Lexer lexer = new Lexer(input);
+      ASTParser parser = new ASTParser(lexer);
+      Program p = parser.parse();
+      p.accept(new SemanticChecker());
+      VM vm = new VM();
+      p.accept(new CodeGenerator(vm));
+      vm.run();
+    } catch(MyPLException e) {
+      System.err.println(e.getMessage());
+    }
   }
 
   /**
@@ -107,7 +127,18 @@ public class MyPL {
    * @param input The mypl program as an input stream
    */
   private static void debugMode(InputStream input) {
-    System.out.println("DEBUG mode not yet supported");
+    try {
+      Lexer lexer = new Lexer(input);
+      ASTParser parser = new ASTParser(lexer);
+      Program p = parser.parse();
+      p.accept(new SemanticChecker());
+      VM vm = new VM();
+      vm.debugMode(true);
+      p.accept(new CodeGenerator(vm));
+      vm.run();
+    } catch(MyPLException e) {
+      System.err.println(e.getMessage());
+    }
   }
   
   /**

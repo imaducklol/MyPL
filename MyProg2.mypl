@@ -1,0 +1,162 @@
+# Author: Orion Hess
+# Program: Basic chess implementation with next to no checking
+# Showcases: Logic, data manipulation, display
+
+# print the board with icons and labels
+# the tabs can be replaced with spaces if you have a good mono font for these icons - I do not
+void pretty_print_board(board: [int]) {
+    # header/column labels
+    # yes it could be one single dead simple statement, but I was messing around with spacing
+    print(" \t")
+    for x from 0 to 7 { print(get(x, "ABCDEFGH")) print("\t")}
+    println("")
+
+    for x from 0 to 7 {
+        # side bar of row labels
+        print(x+1)
+        print("\t")
+        for y from 0 to 7 {
+            print(get(board[(x*8) + y], "♟♜♞♝♛♚♙♖♘♗♕♔░█"))
+            print("\t")
+        }
+        print(x+1)
+        println("")
+    }
+
+    print(" \t")
+    for x from 0 to 7 { print(get(x, "ABCDEFGH")) print("\t")}
+    println("")
+    println("")
+}
+
+# prints the value of the board at each location
+void print_basic(board: [int]) {
+    for x from 0 to 7 {
+        for y from 0 to 7 {
+            print(board[(x*8)+y])
+            print(" ")
+        }
+        println("")
+    }
+}
+
+# prints 0 through 63 in a grid
+void print_nums() {
+    for x from 0 to 7 {
+        for y from 0 to 7 {
+            print((x*8)+y)
+            print(" ")
+            if ((x*8)+y) < 10 {
+                print(" ")
+            }
+        }
+        println("")
+    }
+}
+
+# returns an array populated with the values for icons to work
+[int] populate_board() {
+    var board = new int[64]
+    for x from 0 to 63 { board[x] = 12 }
+
+    # white side
+    for i from 0 to 4 {
+        board[i] = i + 1
+    }
+    for i from 0 to 2 {
+        board[5 + i] = 3 - i
+    }
+    for i from 0 to 7 {
+        board[8+i] = 0
+    }
+
+    # blanks
+    for x from 2 to 5 {
+        for y from 0 to 7 {
+            if is_even(x+y) { board[(x*8)+y] = 12 }
+            else { board[(x*8)+y] = 13}
+        }
+    }
+
+    # black side
+    for i from 0 to 7 {
+        board[(6*8)+i] = 6
+    }
+    for i from 0 to 4 {
+        board[(7*8)+i] = i + 7
+    }
+    for i from 0 to 2 {
+        board[(7*8)+5+i] = 9-i
+    }
+
+    return board
+}
+
+# returns true on an even input
+# we unfortunately do not have mod so this is what has to happen
+bool is_even(n: int) {
+    return ((n / 2) * 2) == n
+}
+
+# returns the corresponding column number for an input, -1 on bad input
+int alpha_to_int(a: string) {
+    if a == "a" { return 0 }
+    else if a == "b" { return 1 }
+    else if a == "c" { return 2 }
+    else if a == "d" { return 3 }
+    else if a == "e" { return 4 }
+    else if a == "f" { return 5 }
+    else if a == "g" { return 6 }
+    else if a == "h" { return 7 }
+    else { return 0 - 1 }
+}
+
+# returns true if position is valid
+bool validate(x: int, y: int) {
+    if (x > 7) or (x < 0) or (y > 7) or (y < 0) { return false }
+    else { return true }
+}
+
+# moves a piece from one position to another
+void move(board: [int], from_x: int, from_y: int, to_x: int, to_y: int) {
+    board[(to_x*8)+to_y] = board[(from_x*8)+from_y]
+    # fill in colored tile behind
+    if is_even(from_x+from_y) { board[(from_x*8)+from_y] = 12 }
+    else { board[(from_x*8)+from_y] = 13}
+}
+
+void main() {
+    # key ♟♜♞♝♛♚♙♖♘♗♕♔░█
+    #     012 345 67 8 9a bcd
+    # (represented in base 14 because monospace lining up is ideal (though my font doesn't))
+
+    # create a populated board
+    var board = populate_board()
+    # print the numbers corresponding to array locations
+    #print_nums()
+    # print the numbers in the array
+    #print_basic()
+
+    var turn = true # white's turn
+    while true {
+        #print("\u001Bc") # in theory clearing the screen, but making escape characters work is hard, even if you add them in the lexer
+        pretty_print_board(board)
+
+        if turn { println("White's turn!") } else { print("Black's turn!") }
+        println("Type your input in the form a1b2, x to quit")
+        var input = readln()
+
+        if input == "x" { return null }
+        var from_row = int_val(get(1, input)) - 1
+        var from_column = alpha_to_int(get(0, input))
+        var to_row = int_val(get(3, input)) - 1
+        var to_column = alpha_to_int(get(2, input))
+        println(input)
+        print(from_row) print(" ") println(from_column)
+        print(to_row) print(" ") println(to_column)
+        if not validate(from_row, from_column) { print("bad input") return null }
+        if not validate(to_row, to_column) { print("bad input") return null }
+
+        move(board, from_row, from_column, to_row, to_column)
+    }
+}
