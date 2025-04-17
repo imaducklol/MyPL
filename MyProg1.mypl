@@ -14,11 +14,17 @@ struct move {
     y: int
 }
 
+# returns the evaluation for the best possible board state
+# there are currently issues here about when the board is referenced versus copied
+# it must return to its initial state after each eval so that a new, different move can be made
+# I did not want to implement a deep copy function...
+# also, everything could be an integer instead of a double, usually eval functions are doubles, so that is a leftover
 double minimax(board: [int], depth: int, maximizing: bool, pruning: bool, alpha: double, beta: double, globals: globals_struct) {
     if depth == 0 {
         return board_eval(board)
     }
 
+    # white's move
     if maximizing {
         var max_eval = 0.0 - globals.infinity
         var possible_moves = get_possible_moves(board, "white")
@@ -35,6 +41,8 @@ double minimax(board: [int], depth: int, maximizing: bool, pruning: bool, alpha:
         }
         return max_eval
     }
+
+    # black's move
     else {
         var min_eval = globals.infinity
         var possible_moves = get_possible_moves(board, "black")
@@ -58,6 +66,8 @@ double minimax(board: [int], depth: int, maximizing: bool, pruning: bool, alpha:
 double board_eval(board: [int]) {
     var sum = 0
     for x from 0 to size(board) - 1 {
+        # in theory here, the values at the board positions are the value of the pieces
+        # unfortunately this is not the case
         sum = sum + board[x]
     }
     return dbl_val(sum)
@@ -65,17 +75,19 @@ double board_eval(board: [int]) {
 
 # even worse function to get possible moves
 # the actual logic is quite involved
+# also we would need a from and to
 [move] get_possible_moves(board: [int], team: string) {
     var moves = new move[64]
     for x from 0 to 7 {
         for y from 0 to 7 {
+            # yes this is just every position
             moves[(x*8) + y] = new move(x, y)
         }
     }
     return moves
 }
 
-# worthless move function,
+# stubbed move function,
 # x and y should be structs of their own with from and to values
 void move(board: [int], x: int, y: int) {
 }
