@@ -425,7 +425,7 @@ public class VM {
           Object y = operandStack.pop();
           if (y.equals(VM.NULL) || x.equals(VM.NULL)) error("GETC called with null argument", frame);
           if ((int) x < 0 || (int) x >= ((String) y).length()) error("GETC called with oob index", frame);
-          operandStack.push(((String) y).charAt((int) x));
+          operandStack.push(Character.toString(((String) y).charAt((int) x)));
         }
         // pop x, push int(x)
         case TOINT -> {
