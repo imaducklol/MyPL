@@ -1,0 +1,112 @@
+# Author: Orion Hess
+# Program: Basic minimax implementation with mostly stubbed helper functions
+
+struct globals_struct {
+    infinity: double
+}
+
+struct move {
+    x: int,
+    y: int
+}
+
+double minimax(board: [int], depth: int, maximizing: bool, pruning: bool, alpha: double, beta: double, globals: globals_struct) {
+    if depth == 0 {
+        return board_eval(board)
+    }
+
+    if maximizing {
+        var max_eval = 0.0 - globals.infinity
+        var possible_moves = get_possible_moves(board, "white")
+        for move from 0 to size(possible_moves) - 1 {
+            move(board , possible_moves[move].x, possible_moves[move].y)
+            var eval = minimax(board , depth - 1, false, pruning, alpha, beta, globals)
+            max_eval = max(max_eval, eval)
+            if pruning {
+                alpha = max(alpha, eval)
+                if max_eval >= beta {
+                    move = size(possible_moves) # same as break
+                }
+            }
+        }
+        return max_eval
+    }
+    else {
+        var min_eval = globals.infinity
+        var possible_moves = get_possible_moves(board, "black")
+        for move from 0 to size(possible_moves) - 1 {
+            move(board , possible_moves[move].x, possible_moves[move].y)
+            var eval = minimax(board, depth - 1, true, pruning, alpha, beta, globals)
+            min_eval = min(min_eval, eval)
+            if pruning {
+                beta = min(beta, eval)
+                if min_eval <= alpha {
+                    move = size(possible_moves)
+                }
+            }
+        }
+        return min_eval
+    }
+}
+
+# terrible function to estimate board evaluation
+# (did not feel like implementing it all, but this sums piece value)
+double board_eval(board: [int]) {
+    var sum = 0
+    for x from 0 to size(board) - 1 {
+        sum = sum + board[x]
+    }
+    return dbl_val(sum)
+}
+
+# even worse function to get possible moves
+# the actual logic is quite involved
+[move] get_possible_moves(board: [int], team: string) {
+    var moves = new move[64]
+    for x from 0 to 7 {
+        for y from 0 to 7 {
+            moves[(x*8) + y] = new move(x, y)
+        }
+    }
+    return moves
+}
+
+# worthless move function,
+# x and y should be structs of their own with from and to values
+void move(board: [int], x: int, y: int) {
+}
+
+# returns the max of two doubles
+double max(x: double, y: double) {
+    if x > y {
+        return x
+    } else {
+        return y
+    }
+}
+
+# returns the min of two doubles
+double min(x: double, y: double) {
+    if x < y {
+        return x
+    } else {
+        return y
+    }
+}
+
+void main() {
+    var globals = new globals_struct(9999.9) # infinity is 9999.9 if you didn't know
+    var board = new int[64] # standard chess board, in theory the pieces are represented by actual numbers
+    for x from 0 to 63 {
+        board[x] = x
+    }
+    var depth = 1 # number of times to recurse
+    var maximizing = true # sets the current team
+    var pruning = true # ab pruning enabled
+    var alpha = 0.0 - globals.infinity # these always get initialized this way
+    var beta = globals.infinity # 0 - inf is used instead of * -1 because negative numbers dont parse :'(
+
+    # the result of this function would be compared across a number of moves made, not just run once
+    var result = minimax(board, depth, maximizing, pruning, alpha, beta, globals)
+    println(result)
+}
