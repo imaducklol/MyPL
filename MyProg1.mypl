@@ -1,5 +1,9 @@
 # Author: Orion Hess
 # Program: Basic minimax implementation with mostly stubbed helper functions
+# Showcases: Structs, math, logic, comparisons, data manipulation
+
+# This program could likely be run on the data from MyProg2,
+# but the board_eval function would need to be changed to map piece value correctly
 
 struct globals_struct {
     infinity: double
