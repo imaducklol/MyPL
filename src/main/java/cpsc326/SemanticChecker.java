@@ -227,7 +227,7 @@ public class SemanticChecker implements Visitor {
       }
       // check if it's a struct type
       else if (node.dataType.get().type.tokenType == TokenType.ID) {
-        if (!node.dataType.get().type.lexeme.equals(currType.type.lexeme)) {
+        if (!(currType.type.lexeme.equals("null") || node.dataType.get().type.lexeme.equals(currType.type.lexeme))) {
           error("Mismatched struct types in variable statement", node.varName);
         }
       }
