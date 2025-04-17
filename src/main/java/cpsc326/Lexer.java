@@ -1,8 +1,8 @@
 /**
  * CPSC 326, Spring 2025
  * MyPL Lexer Implementation.
- * <p>
- * PUT YOUR NAME HERE IN PLACE OF THIS TEXT
+ *
+ * Orion Hess
  */
 
 package cpsc326;
@@ -42,7 +42,7 @@ public class Lexer {
         } catch (IOException e) {
             error("read error", line, column + 1);
         }
-        return (char) -1;
+          return (char) -1;
     }
 
     /**

@@ -1,8 +1,8 @@
 /**
  * CPSC 326, Spring 2025
  * Pretty print visitor.
- * <p>
- * PUT YOUR NAME HERE IN PLACE OF THIS TEXT
+ *
+ * Orion Hess
  */
 
 

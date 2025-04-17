@@ -16,7 +16,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 /**
  * The MyPL class serves as the main entry point to the
- * interpreter.
+ * interpreter. 
  */
 public class MyPL {
 
@@ -74,12 +74,20 @@ public class MyPL {
    * @param input The mypl program as an input stream
    */
   private static void checkMode(InputStream input) {
-    System.out.println("CHECK mode not yet supported");
+    try {
+      Lexer lexer = new Lexer(input);
+      ASTParser parser = new ASTParser(lexer);
+      Program p = parser.parse();
+      p.accept(new SemanticChecker());
+    } catch(MyPLException e) {
+      System.err.println(e.getMessage());
+    }
+    System.out.println("No static errors found");
   }
-
+  
   /**
    * Output the intermediate representation of the given mypl
-   * program.
+   * program. 
    * @param input The mypl program as an input stream
    */
   private static void irMode(InputStream input) {
@@ -87,7 +95,7 @@ public class MyPL {
   }
 
   /**
-   * Run the given mypl program.
+   * Run the given mypl program. 
    * @param input The mypl program as an input stream
    */
   private static void runMode(InputStream input) {
@@ -101,11 +109,11 @@ public class MyPL {
   private static void debugMode(InputStream input) {
     System.out.println("DEBUG mode not yet supported");
   }
-
+  
   /**
    * Parse the command line options and run the given mypl program in
    * the corresponding mode (either lex, parse, print, check, ir, or
-   * run).
+   * run). 
    */
   public static void main(String[] args) {
     InputStream input = System.in;
