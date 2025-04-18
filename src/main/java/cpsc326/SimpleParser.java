@@ -1,7 +1,7 @@
 /**
  * CPSC 326, Spring 2025
  * The Simple Parser implementation.
- *
+ * <p>
  * Orion Hess
  */
 
@@ -12,16 +12,17 @@ import java.util.List;
 
 /**
  * Simple recursive descent parser for checking program syntax.
- */ 
+ */
 public class SimpleParser {
 
-  private Lexer lexer;          // the lexer
+  private final Lexer lexer;          // the lexer
   private Token currToken;      // the current token
 
   /**
    * Create a SimpleParser from the give lexer.
+   *
    * @param lexer The lexer for the program to parse.
-   */ 
+   */
   public SimpleParser(Lexer lexer) {
     this.lexer = lexer;
   }
@@ -37,6 +38,7 @@ public class SimpleParser {
 
   /**
    * Generate and throw a mypl parser exception.
+   *
    * @param msg The error message.
    */
   private void error(String msg) {
@@ -58,16 +60,18 @@ public class SimpleParser {
 
   /**
    * Checks that the current token has the given token type.
+   *
    * @param targetTokenType The token type to check against.
    * @return True if the types match, false otherwise.
    */
   private boolean match(TokenType targetTokenType) {
-    return currToken.tokenType == targetTokenType; 
+    return currToken.tokenType == targetTokenType;
   }
 
   /**
    * Checks that the current token is contained in the given list of
    * token types.
+   *
    * @param targetTokenTypes The token types ot check against.
    * @return True if the current type is in the given list, false
    * otherwise.
@@ -78,6 +82,7 @@ public class SimpleParser {
 
   /**
    * Advance to next token if current token matches the given token type.
+   *
    * @param targetTokenType The token type to check against.
    */
   private void eat(TokenType targetTokenType, String msg) {
@@ -85,16 +90,16 @@ public class SimpleParser {
       error(msg);
     advance();
   }
-  
+
   /**
    * Helper to check that the current token is a binary operator.
    */
   private boolean isBinOp() {
     return matchAny(List.of(TokenType.PLUS, TokenType.MINUS, TokenType.TIMES,
-                            TokenType.DIVIDE, TokenType.AND, TokenType.OR,
-                            TokenType.EQUAL, TokenType.LESS, TokenType.GREATER,
-                            TokenType.LESS_EQ, TokenType.GREATER_EQ,
-                            TokenType.NOT_EQUAL));
+            TokenType.DIVIDE, TokenType.AND, TokenType.OR,
+            TokenType.EQUAL, TokenType.LESS, TokenType.GREATER,
+            TokenType.LESS_EQ, TokenType.GREATER_EQ,
+            TokenType.NOT_EQUAL));
   }
 
   /**
@@ -102,13 +107,13 @@ public class SimpleParser {
    */
   private boolean isLiteral() {
     return matchAny(List.of(TokenType.INT_VAL, TokenType.DOUBLE_VAL,
-                            TokenType.STRING_VAL, TokenType.BOOL_VAL,
-                            TokenType.NULL_VAL));
+            TokenType.STRING_VAL, TokenType.BOOL_VAL,
+            TokenType.NULL_VAL));
   }
 
   /**
    * Checks for a valid program.
-   */ 
+   */
   private void program() {
     while (!match(TokenType.EOS)) {
       // Struct definition
@@ -124,7 +129,7 @@ public class SimpleParser {
 
   /**
    * Checks for a valid struct definition.
-   */ 
+   */
   private void structDef() {
     // First already checked
     advance();
@@ -159,7 +164,7 @@ public class SimpleParser {
 
   /**
    * Checks for a valid function definition.
-   */ 
+   */
   private void funDef() {
     returnType();
     eat(TokenType.ID, "Expected ID");
@@ -407,7 +412,7 @@ public class SimpleParser {
    */
   private void args() {
     // If there aren't args, there will be an RPAREN
-    if  (!match(TokenType.RPAREN)) {
+    if (!match(TokenType.RPAREN)) {
       expr();
     }
     while (match(TokenType.COMMA)) {

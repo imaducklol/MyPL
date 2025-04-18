@@ -1,21 +1,16 @@
 /**
  * CPSC 326, Spring 2025
  * The virtual machine implementation.
+ * <p>
+ * Orion Hess
  */
 
 package cpsc326;
 
-import java.io.IOException;
-import java.sql.Array;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.ArrayDeque;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Collections;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.*;
 
 /**
  * MyPL virtual machine for running MyPL programs (as VM
@@ -31,19 +26,19 @@ public class VM {
   };
 
   /* the array heap as an oid to list mapping */
-  private Map<Integer, List<Object>> arrayHeap = new HashMap<>();
+  private final Map<Integer, List<Object>> arrayHeap = new HashMap<>();
 
   /* the struct heap as an oid to object (field to value map) mapping */
-  private Map<Integer, Map<String, Object>> structHeap = new HashMap<>();
+  private final Map<Integer, Map<String, Object>> structHeap = new HashMap<>();
 
   /* the operand stack */
-  private Deque<Object> operandStack = new ArrayDeque<>();
+  private final Deque<Object> operandStack = new ArrayDeque<>();
 
   /* the function (frame) call stack */
-  private Deque<VMFrame> callStack = new ArrayDeque<>();
+  private final Deque<VMFrame> callStack = new ArrayDeque<>();
 
   /* the set of program function definitions (frame templates) */
-  private Map<String, VMFrameTemplate> templates = new HashMap<>();
+  private final Map<String, VMFrameTemplate> templates = new HashMap<>();
 
   /* the next unused object id */
   private int nextObjectId = 2025;
@@ -131,7 +126,7 @@ public class VM {
     else if (x instanceof Double)
       return (double) x + (double) y;
     else
-      return (String) x + (String) y;
+      return x + (String) y;
   }
 
   /**
@@ -159,7 +154,7 @@ public class VM {
    */
   private Object divHelper(Object x, Object y, VMFrame f) {
     if (x instanceof Integer && (int) y != 0)
-      return (int) ((int) x / (int) y);
+      return (int) x / (int) y;
     else if (x instanceof Double && (double) y != 0.0)
       return (double) x / (double) y;
     else

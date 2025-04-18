@@ -1,30 +1,30 @@
 /**
  * CPSC 326, Spring 2025
  * The AST Parser implementation.
- *
+ * <p>
  * Orion Hess
  */
 
 package cpsc326;
 
-import javax.xml.crypto.Data;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-  
+
 
 /**
  * Simple recursive descent parser for checking program syntax.
- */ 
+ */
 public class ASTParser {
 
-  private Lexer lexer;          // the lexer
+  private final Lexer lexer;          // the lexer
   private Token currToken;      // the current token
 
   /**
    * Create a SimpleParser from the give lexer.
+   *
    * @param lexer The lexer for the program to parse.
-   */ 
+   */
   public ASTParser(Lexer lexer) {
     this.lexer = lexer;
   }
@@ -41,6 +41,7 @@ public class ASTParser {
 
   /**
    * Generate and throw a mypl parser exception.
+   *
    * @param msg The error message.
    */
   private void error(String msg) {
@@ -62,16 +63,18 @@ public class ASTParser {
 
   /**
    * Checks that the current token has the given token type.
+   *
    * @param targetTokenType The token type to check against.
    * @return True if the types match, false otherwise.
    */
   private boolean match(TokenType targetTokenType) {
-    return currToken.tokenType == targetTokenType; 
+    return currToken.tokenType == targetTokenType;
   }
 
   /**
    * Checks that the current token is contained in the given list of
    * token types.
+   *
    * @param targetTokenTypes The token types ot check against.
    * @return True if the current type is in the given list, false
    * otherwise.
@@ -82,6 +85,7 @@ public class ASTParser {
 
   /**
    * Advance to next token if current token matches the given token type.
+   *
    * @param targetTokenType The token type to check against.
    */
   private void eat(TokenType targetTokenType, String msg) {
@@ -89,16 +93,16 @@ public class ASTParser {
       error(msg);
     advance();
   }
-  
+
   /**
    * Check if the current token is an allowed binary operator
    */
   private boolean isBinOp() {
     return matchAny(List.of(TokenType.PLUS, TokenType.MINUS, TokenType.TIMES,
-                            TokenType.DIVIDE, TokenType.AND, TokenType.OR,
-                            TokenType.EQUAL, TokenType.LESS, TokenType.GREATER,
-                            TokenType.LESS_EQ, TokenType.GREATER_EQ,
-                            TokenType.NOT_EQUAL));
+            TokenType.DIVIDE, TokenType.AND, TokenType.OR,
+            TokenType.EQUAL, TokenType.LESS, TokenType.GREATER,
+            TokenType.LESS_EQ, TokenType.GREATER_EQ,
+            TokenType.NOT_EQUAL));
   }
 
   /**
@@ -106,12 +110,13 @@ public class ASTParser {
    */
   private boolean isLiteral() {
     return matchAny(List.of(TokenType.INT_VAL, TokenType.DOUBLE_VAL,
-                            TokenType.STRING_VAL, TokenType.BOOL_VAL,
-                            TokenType.NULL_VAL));
+            TokenType.STRING_VAL, TokenType.BOOL_VAL,
+            TokenType.NULL_VAL));
   }
 
   /**
    * Parse the program
+   *
    * @return the corresponding Program AST object
    */
   private Program program() {
@@ -131,6 +136,7 @@ public class ASTParser {
 
   /**
    * Parse structs
+   *
    * @return the corresponding Struct AST object
    */
   private StructDef structDef() {
@@ -158,6 +164,7 @@ public class ASTParser {
 
   /**
    * Parse variable definitions
+   *
    * @return the corresponding VarDef AST object
    */
   private VarDef varDef() {
@@ -172,6 +179,7 @@ public class ASTParser {
 
   /**
    * Parse function definitions
+   *
    * @return the corresponding FunDef AST object
    */
   private FunDef funDef() {
@@ -192,6 +200,7 @@ public class ASTParser {
 
   /**
    * Parse statements
+   *
    * @return a list of Stmt AST Objects
    */
   private List<Stmt> stmts() {
@@ -207,6 +216,7 @@ public class ASTParser {
 
   /**
    * Parse parameters
+   *
    * @return a list of VarDef AST objects
    */
   private List<VarDef> params() {
@@ -223,6 +233,7 @@ public class ASTParser {
 
   /**
    * Parse individual parameters
+   *
    * @return a VarDef AST object for the parameter
    */
   private VarDef param() {
@@ -240,6 +251,7 @@ public class ASTParser {
 
   /**
    * Parse data types
+   *
    * @return the corresponding DataType AST object
    */
   private DataType dataType() {
@@ -265,6 +277,7 @@ public class ASTParser {
 
   /**
    * Parse base types
+   *
    * @return the Token of the type
    */
   private Token baseType() {
@@ -280,15 +293,21 @@ public class ASTParser {
 
   /**
    * Parse statements
+   *
    * @return the corresponding VarDef AST object
    */
   private Stmt stmt() {
     switch (currToken.tokenType) {
-      case TokenType.VAR:     return varStmt();
-      case TokenType.WHILE:   return whileStmt();
-      case TokenType.IF:      return ifStmt();
-      case TokenType.FOR:     return forStmt();
-      case TokenType.RETURN:  return returnStmt();
+      case TokenType.VAR:
+        return varStmt();
+      case TokenType.WHILE:
+        return whileStmt();
+      case TokenType.IF:
+        return ifStmt();
+      case TokenType.FOR:
+        return forStmt();
+      case TokenType.RETURN:
+        return returnStmt();
       case TokenType.ID:
         Token idToken = currToken;
         advance();
@@ -305,6 +324,7 @@ public class ASTParser {
 
   /**
    * Parse variable statements
+   *
    * @return the corresponding VarStmt AST object
    */
   private VarStmt varStmt() {
@@ -333,6 +353,7 @@ public class ASTParser {
 
   /**
    * Parse variable type
+   *
    * @return the corresponding DataType AST object
    */
   private DataType varType() {
@@ -342,6 +363,7 @@ public class ASTParser {
 
   /**
    * Parse variable initialization
+   *
    * @return the corresponding Expr AST object
    */
   private Expr varInit() {
@@ -352,6 +374,7 @@ public class ASTParser {
 
   /**
    * Parse while statement
+   *
    * @return the corresponding WhileStmt AST object
    */
   private WhileStmt whileStmt() {
@@ -365,6 +388,7 @@ public class ASTParser {
 
   /**
    * Parse if statements
+   *
    * @return the corresponding IfStmt AST object
    */
   private IfStmt ifStmt() {
@@ -386,6 +410,7 @@ public class ASTParser {
 
   /**
    * Parse for statements
+   *
    * @return the corresponding ForStmt AST object
    */
   private ForStmt forStmt() {
@@ -408,6 +433,7 @@ public class ASTParser {
 
   /**
    * Parse return statements
+   *
    * @return the corresponding ReturnStmt AST object
    */
   private ReturnStmt returnStmt() {
@@ -420,6 +446,7 @@ public class ASTParser {
 
   /**
    * Parse assign statements
+   *
    * @return the corresponding AssignStmt AST object
    */
   private AssignStmt assignStmt(Token idToken) {
@@ -432,6 +459,7 @@ public class ASTParser {
 
   /**
    * Parse left value for assign statements
+   *
    * @return a list of VarDef AST objects
    */
   private List<VarRef> lvalue(Token idToken) {
@@ -466,6 +494,7 @@ public class ASTParser {
 
   /**
    * Parse function call
+   *
    * @return the corresponding CallRValue AST object
    */
   private CallRValue funCall(Token idToken) {
@@ -480,12 +509,13 @@ public class ASTParser {
 
   /**
    * Parse arguments for a function call
+   *
    * @return a list of the corresponding Expr AST objects
    */
   private List<Expr> args() {
     List<Expr> args = new ArrayList<>();
     // If there aren't args, there will be an RPAREN
-    if  (!match(TokenType.RPAREN)) {
+    if (!match(TokenType.RPAREN)) {
       args.add(expr());
     }
     while (match(TokenType.COMMA)) {
@@ -497,6 +527,7 @@ public class ASTParser {
 
   /**
    * Parse expressions
+   *
    * @return the corresponding Expr AST object
    */
   private Expr expr() {
@@ -528,6 +559,7 @@ public class ASTParser {
 
   /**
    * Parse a binary operator
+   *
    * @return the corresponding Token
    */
   private Token binOp() {
@@ -539,6 +571,7 @@ public class ASTParser {
 
   /**
    * Parse right values
+   *
    * @return the corresponding RValue AST object
    */
   private RValue rvalue() {
@@ -562,6 +595,7 @@ public class ASTParser {
 
   /**
    * Parse new right value
+   *
    * @return the corresponding NewRValue AST object
    */
   private NewRValue newRvalue() {
@@ -595,6 +629,7 @@ public class ASTParser {
 
   /**
    * Parse literal
+   *
    * @return the corresponding SimpleRValue AST object
    */
   private SimpleRValue literal() {
@@ -607,6 +642,7 @@ public class ASTParser {
 
   /**
    * Parse variable
+   *
    * @return the corresponding VarRValue AST object
    */
   private VarRValue varRvalue(Token idToken) {
@@ -639,5 +675,5 @@ public class ASTParser {
     }
     return varRValue;
   }
-  
+
 }

@@ -5,9 +5,8 @@
 
 package cpsc326;
 
-import java.util.List;
 import java.util.ArrayList;
-
+import java.util.List;
 
 /**
  * Class for holding the frame's function name and instructions.
@@ -29,6 +28,7 @@ public class VMFrameTemplate {
 
   /**
    * Add an instruction
+   *
    * @param instr the instruction to add
    */
   public void add(VMInstr instr) {
@@ -37,6 +37,7 @@ public class VMFrameTemplate {
 
   /**
    * Get the instruction at the given index
+   *
    * @param instrIndex the index of the instruction
    * @returns the instruction or null if the index is invalid
    */

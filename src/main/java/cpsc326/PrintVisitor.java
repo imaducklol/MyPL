@@ -1,10 +1,9 @@
 /**
  * CPSC 326, Spring 2025
  * Pretty print visitor.
- *
+ * <p>
  * Orion Hess
  */
-
 
 package cpsc326;
 
@@ -137,8 +136,7 @@ public class PrintVisitor implements Visitor {
 
     if (node.dataType.isArray) {
       write("[" + node.dataType.type.lexeme + "]");
-    }
-    else {
+    } else {
       write(node.dataType.type.lexeme);
     }
   }

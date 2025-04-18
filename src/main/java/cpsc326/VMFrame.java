@@ -5,9 +5,8 @@
 
 package cpsc326;
 
-import java.util.List;
 import java.util.ArrayList;
-
+import java.util.List;
 
 /**
  * Class for representing function call information.
@@ -23,13 +22,13 @@ public class VMFrame {
   /* the current instruction index (program counter) */
   public int pc = 0;
 
-  
+
   /**
    * Create (instantiate) a frame with the given template
    */
   public VMFrame(VMFrameTemplate template) {
     this.template = template;
   }
-  
+
 }
 

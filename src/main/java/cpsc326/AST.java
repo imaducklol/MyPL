@@ -1,13 +1,12 @@
 /**
  * CPSC 326, Spring 2025
  * MyPL AST Interface and Class Definitions
- * 
  */
 
 package cpsc326;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -15,7 +14,7 @@ import java.util.Optional;
  * Base AST inteface class that all AST nodes must implement
  */
 public interface AST {
-  public void accept(Visitor v);
+  void accept(Visitor v);
 }
 
 
@@ -23,60 +22,6 @@ public interface AST {
 // top-level AST classes
 //----------------------------------------------------------------------
 
-
-/**
- * Represents a MyPL program consisting of function and struct
- * definitions.
- */
-class Program implements AST {
-  public List<StructDef> structs = new ArrayList<>();
-  public List<FunDef> functions = new ArrayList<>();
-  public void accept(Visitor v) {v.visit(this);}
-}
-
-/**
- * Represents a struct definition
- */
-class StructDef implements AST {
-  public Token structName;
-  public List<VarDef> fields;
-  public void accept(Visitor v) {v.visit(this);}
-}
-
-/**
- * Represents a function definition
- */
-class FunDef implements AST {
-  public DataType returnType;
-  public Token funName;
-  public List<VarDef> params = new ArrayList<>();
-  public List<Stmt> stmts = new ArrayList<>();
-  public void accept(Visitor v) {v.visit(this);}
-}
-
-/**
- * Represents a variable name with a data type (for function params
- * and struct fields)
- */
-class VarDef implements AST {
-  public Token varName;
-  public DataType dataType;
-  public void accept(Visitor v) {v.visit(this);}
-}
-
-/**
- * Represents a data type
- */
-class DataType implements AST {
-  public boolean isArray;
-  public Token type;
-  public void accept(Visitor v) {v.visit(this);}
-}
-
-
-//----------------------------------------------------------------------
-// Values and Expressions
-//----------------------------------------------------------------------
 
 /**
  * Interface for all expressions
@@ -91,11 +36,95 @@ interface RValue extends AST {
 }
 
 /**
+ * Interface for all new expressions
+ */
+interface NewRValue extends RValue {
+}
+
+/**
+ * Interface for all statements
+ */
+interface Stmt extends AST {
+}
+
+/**
+ * Represents a MyPL program consisting of function and struct
+ * definitions.
+ */
+class Program implements AST {
+  public List<StructDef> structs = new ArrayList<>();
+  public List<FunDef> functions = new ArrayList<>();
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
+}
+
+
+//----------------------------------------------------------------------
+// Values and Expressions
+//----------------------------------------------------------------------
+
+/**
+ * Represents a struct definition
+ */
+class StructDef implements AST {
+  public Token structName;
+  public List<VarDef> fields;
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
+}
+
+/**
+ * Represents a function definition
+ */
+class FunDef implements AST {
+  public DataType returnType;
+  public Token funName;
+  public List<VarDef> params = new ArrayList<>();
+  public List<Stmt> stmts = new ArrayList<>();
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
+}
+
+/**
+ * Represents a variable name with a data type (for function params
+ * and struct fields)
+ */
+class VarDef implements AST {
+  public Token varName;
+  public DataType dataType;
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
+}
+
+/**
+ * Represents a data type
+ */
+class DataType implements AST {
+  public boolean isArray;
+  public Token type;
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
+}
+
+/**
  * Represents an expression composed of a signle rvalue
  */
 class BasicExpr implements Expr {
   public RValue rvalue;
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -105,7 +134,10 @@ class BasicExpr implements Expr {
 class UnaryExpr implements Expr {
   public Token unaryOp;
   public Expr expr;
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -115,8 +147,11 @@ class UnaryExpr implements Expr {
 class BinaryExpr implements Expr {
   public Expr lhs;
   public Token binaryOp;
-  public Expr rhs; 
-  public void accept(Visitor v) {v.visit(this);}
+  public Expr rhs;
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -124,7 +159,10 @@ class BinaryExpr implements Expr {
  */
 class SimpleRValue implements RValue {
   public Token literal;
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -134,13 +172,10 @@ class SimpleRValue implements RValue {
 class CallRValue implements Stmt, RValue {
   public Token funName;
   public List<Expr> args = new ArrayList<>();
-  public void accept(Visitor v) {v.visit(this);}
-}
 
-/**
- * Interface for all new expressions
- */
-interface NewRValue extends RValue {
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -149,7 +184,10 @@ interface NewRValue extends RValue {
 class NewStructRValue implements NewRValue {
   public Token structName;
   public List<Expr> args = new ArrayList<>();
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -158,7 +196,10 @@ class NewStructRValue implements NewRValue {
 class NewArrayRValue implements NewRValue {
   public Token type;
   public Expr arrayExpr;
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -170,23 +211,20 @@ class VarRef {
   public Optional<Expr> arrayExpr = Optional.empty();
 }
 
+//----------------------------------------------------------------------
+// Statements
+//----------------------------------------------------------------------
+
 /**
  * Represents an rvalue consisting of one or more variable references
  * (forming a path expression)
  */
 class VarRValue implements RValue {
   public List<VarRef> path = new ArrayList<>();
-  public void accept(Visitor v) {v.visit(this);}
-}
 
-//----------------------------------------------------------------------
-// Statements
-//----------------------------------------------------------------------
-
-/**
- * Interface for all statements
- */
-interface Stmt extends AST {
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -194,7 +232,10 @@ interface Stmt extends AST {
  */
 class ReturnStmt implements Stmt {
   public Expr expr;
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -205,7 +246,10 @@ class VarStmt implements Stmt {
   public Token varName;
   public Optional<DataType> dataType = Optional.empty();
   public Optional<Expr> expr = Optional.empty();
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -214,7 +258,10 @@ class VarStmt implements Stmt {
 class AssignStmt implements Stmt {
   public List<VarRef> lvalue = new ArrayList<>();
   public Expr expr;
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -223,7 +270,10 @@ class AssignStmt implements Stmt {
 class WhileStmt implements Stmt {
   public Expr condition;
   public List<Stmt> stmts = new ArrayList<>();
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -234,7 +284,10 @@ class ForStmt implements Stmt {
   public Expr fromExpr;
   public Expr toExpr;
   public List<Stmt> stmts = new ArrayList<>();
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 
 /**
@@ -245,6 +298,9 @@ class IfStmt implements Stmt {
   public List<Stmt> ifStmts = new ArrayList<>();
   public Optional<IfStmt> elseIf = Optional.empty();
   public Optional<List<Stmt>> elseStmts = Optional.empty();
-  public void accept(Visitor v) {v.visit(this);}
+
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
 }
 

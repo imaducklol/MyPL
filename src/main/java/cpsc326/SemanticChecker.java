@@ -5,19 +5,20 @@
  * Orion Hess
  */
 
-
 package cpsc326;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class SemanticChecker implements Visitor {
 
   // for tracking function and struct definitions: 
-  private Map<String, FunDef> functions = new HashMap<>();
-  private Map<String, StructDef> structs = new HashMap<>();
+  private final Map<String, FunDef> functions = new HashMap<>();
+  private final Map<String, StructDef> structs = new HashMap<>();
   // for tracking variable types:
-  private SymbolTable symbolTable = new SymbolTable();
+  private final SymbolTable symbolTable = new SymbolTable();
   // for holding the last inferred type:
   private DataType currType;
 
@@ -266,7 +267,10 @@ public class SemanticChecker implements Visitor {
 
     boolean firstDone = true;
     for (VarRef var : node.lvalue) {
-      if (firstDone) { firstDone = false; continue;}
+      if (firstDone) {
+        firstDone = false;
+        continue;
+      }
       // if this is hit, the previous var was an array that needed to be dereferenced
       if (current.isArray) error("Failed to dereference array", var.varName);
 
@@ -429,7 +433,7 @@ public class SemanticChecker implements Visitor {
           }
           // check arg types
           node.args.getFirst().accept(this);
-          if (!List.of(TokenType.DOUBLE_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType)){
+          if (!List.of(TokenType.DOUBLE_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType)) {
             error("Argument has wrong type, expected double or string type", node.funName);
           }
           // process function return type
@@ -445,7 +449,7 @@ public class SemanticChecker implements Visitor {
           }
           // check arg types
           node.args.getFirst().accept(this);
-          if (!List.of(TokenType.INT_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType)){
+          if (!List.of(TokenType.INT_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType)) {
             error("Argument has wrong type, expected int or string type", node.funName);
           }
           // process function return type
@@ -461,7 +465,7 @@ public class SemanticChecker implements Visitor {
           }
           // check arg types
           node.args.getFirst().accept(this);
-          if (!List.of(TokenType.INT_TYPE, TokenType.DOUBLE_TYPE).contains(currType.type.tokenType)){
+          if (!List.of(TokenType.INT_TYPE, TokenType.DOUBLE_TYPE).contains(currType.type.tokenType)) {
             error("Argument has wrong type, expected int or double type", node.funName);
           }
           // process function return type
@@ -639,7 +643,10 @@ public class SemanticChecker implements Visitor {
 
     boolean firstDone = true;
     for (VarRef var : node.path) {
-      if (firstDone) { firstDone = false; continue;}
+      if (firstDone) {
+        firstDone = false;
+        continue;
+      }
       // if this is hit, the previous var was an array that needed to be dereferenced
       if (current.isArray) error("Failed to dereference array", var.varName);
 
