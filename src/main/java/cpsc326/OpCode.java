@@ -42,6 +42,8 @@ public enum OpCode {
   TOINT,   // pop x, push int(x)
   TODBL,   // pop x, push double(x)
   TOSTR,   // pop x, push str(x)
+  THREAD,  // similar to call, starts a new thread of function A - pushes arguments onto the new op stack
+  WAIT,    // pop x, wait for/join tid x, push return of threaded func
 
   // heap
   ALLOCS,  // allocate struct object, push oid x

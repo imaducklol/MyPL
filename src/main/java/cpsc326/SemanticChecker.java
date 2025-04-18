@@ -549,14 +549,17 @@ public class SemanticChecker implements Visitor {
           }
           // check arg types
           node.args.getFirst().accept(this);
+          // TODO: Ensure this is a string literal, NOT a variable
           if (currType.type.tokenType != TokenType.STRING_TYPE || currType.isArray) {
             error("First argument has wrong type, expected string type", node.funName);
           }
           node.args.get(1).accept(this);
+          // TODO: Ensure that STRUCT is the type for struct types, we maybe need to check the struct's lexeme exists in structs dict
           if (currType.type.tokenType != TokenType.STRUCT || currType.isArray) {
             error("Second argument has wrong type, expected struct", node.funName);
           }
           // process function return type
+          // this is just the thread id (tid)
           currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
           currType.isArray = false;
         }
