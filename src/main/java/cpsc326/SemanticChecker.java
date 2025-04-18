@@ -37,7 +37,7 @@ public class SemanticChecker implements Visitor {
    *
    */
   private boolean isBuiltInFunction(String name) {
-    return List.of("print", "println", "readln", "size", "get", "int_val", "dbl_val", "str_val").contains(name);
+    return List.of("print", "println", "readln", "size", "get", "int_val", "dbl_val", "str_val", "thread_create", "thread_wait").contains(name);
   }
 
   /**
@@ -426,7 +426,7 @@ public class SemanticChecker implements Visitor {
     // check if builtin
     if (isBuiltInFunction(node.funName.lexeme)) {
       switch (node.funName.lexeme) {
-        case "int_val": {
+        case "int_val" -> {
           // check args count
           if (1 != node.args.size()) {
             error("Wrong number of arguments supplied, expected 1", node.funName);
@@ -440,9 +440,8 @@ public class SemanticChecker implements Visitor {
           currType = new DataType();
           currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
         }
-        case "dbl_val": {
+        case "dbl_val" -> {
           // check args count
           if (1 != node.args.size()) {
             error("Wrong number of arguments supplied, expected 1", node.funName);
@@ -456,9 +455,8 @@ public class SemanticChecker implements Visitor {
           currType = new DataType();
           currType.type = new Token(TokenType.DOUBLE_TYPE, "double", node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
         }
-        case "str_val": {
+        case "str_val" -> {
           // check args count
           if (1 != node.args.size()) {
             error("Wrong number of arguments supplied, expected 1", node.funName);
@@ -472,9 +470,8 @@ public class SemanticChecker implements Visitor {
           currType = new DataType();
           currType.type = new Token(TokenType.STRING_TYPE, "string", node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
         }
-        case "print": {
+        case "print" -> {
           // check args count
           if (1 != node.args.size()) {
             error("Wrong number of arguments supplied, expected 1", node.funName);
@@ -487,9 +484,8 @@ public class SemanticChecker implements Visitor {
           currType = new DataType();
           currType.type = new Token(TokenType.VOID_TYPE, "null", node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
         }
-        case "println": {
+        case "println" -> {
           // check args count
           if (1 != node.args.size()) {
             error("Wrong number of arguments supplied, expected 1", node.funName);
@@ -502,9 +498,8 @@ public class SemanticChecker implements Visitor {
           currType = new DataType();
           currType.type = new Token(TokenType.VOID_TYPE, "null", node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
         }
-        case "readln": {
+        case "readln" -> {
           // check args count
           if (!node.args.isEmpty()) {
             error("Wrong number of arguments supplied, expected 0", node.funName);
@@ -513,9 +508,8 @@ public class SemanticChecker implements Visitor {
           currType = new DataType();
           currType.type = new Token(TokenType.STRING_TYPE, "string", node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
         }
-        case "size": {
+        case "size" -> {
           // check args count
           if (1 != node.args.size()) {
             error("Wrong number of arguments supplied, expected 1", node.funName);
@@ -529,9 +523,8 @@ public class SemanticChecker implements Visitor {
           currType = new DataType();
           currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
         }
-        case "get": {
+        case "get" -> {
           // check args count
           if (2 != node.args.size()) {
             error("Wrong number of arguments supplied, expected 2", node.funName);
@@ -548,7 +541,39 @@ public class SemanticChecker implements Visitor {
           // process function return type
           currType.type = new Token(currType.type.tokenType, currType.type.lexeme, node.funName.line, node.funName.column);
           currType.isArray = false;
-          break;
+        }
+        case "thread_create" -> {
+          // check args count
+          if (2 != node.args.size()) {
+            error("Wrong number of arguments supplied, expected 2", node.funName);
+          }
+          // check arg types
+          node.args.getFirst().accept(this);
+          if (currType.type.tokenType != TokenType.STRING_TYPE || currType.isArray) {
+            error("First argument has wrong type, expected string type", node.funName);
+          }
+          node.args.get(1).accept(this);
+          if (currType.type.tokenType != TokenType.STRUCT || currType.isArray) {
+            error("Second argument has wrong type, expected struct", node.funName);
+          }
+          // process function return type
+          currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
+          currType.isArray = false;
+        }
+        case "thread_wait" -> {
+          // check args count
+          if (1 != node.args.size()) {
+            error("Wrong number of arguments supplied, expected 1", node.funName);
+          }
+          // check arg types
+          node.args.getFirst().accept(this);
+          if (currType.type.tokenType != TokenType.INT_TYPE || currType.isArray) {
+            error("First argument has wrong type, expected int type", node.funName);
+          }
+          // process function return type
+          // TODO: Figure out the type and lexeme here, maybe just letting it return ints and handle other stuff through the reference
+          currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
+          currType.isArray = false;
         }
       }
       return;
