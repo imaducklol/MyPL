@@ -26,21 +26,26 @@ public class VM {
   };
 
   /* the array heap as an oid to list mapping */
+  // TODO: Ensure no race condition on arrayHeap
   private final Map<Integer, List<Object>> arrayHeap = new HashMap<>();
 
   /* the struct heap as an oid to object (field to value map) mapping */
+  // TODO: Ensure no race condition on structHeap
   private final Map<Integer, Map<String, Object>> structHeap = new HashMap<>();
 
   /* the operand stack */
+  // TODO: Handle multiple(?) OpStacks for threads
   private final Deque<Object> operandStack = new ArrayDeque<>();
 
   /* the function (frame) call stack */
+  // TODO: Handle multiple(?) callStacks for threads
   private final Deque<VMFrame> callStack = new ArrayDeque<>();
 
   /* the set of program function definitions (frame templates) */
   private final Map<String, VMFrameTemplate> templates = new HashMap<>();
 
   /* the next unused object id */
+  // TODO: Ensure no race condition on nextObjectId
   private int nextObjectId = 2025;
 
   /* debug flag for output debug info during vm execution (run) */
@@ -64,6 +69,7 @@ public class VM {
    * @param msg   The error message.
    * @param frame The frame where the error occurred.
    */
+  // TODO: Put thread related info in the error messages
   private void error(String msg, VMFrame frame) {
     String s = "%s in %s at %d: %s";
     String name = frame.template.functionName;
@@ -191,6 +197,7 @@ public class VM {
   /**
    * Execute the program
    */
+  // TODO: modify run to be able to work on a different call and op stack, should just be able to make them inputs
   public void run() {
     // grab the main frame and "instantiate" it
     if (!templates.containsKey("main"))
@@ -454,6 +461,19 @@ public class VM {
           if (x.equals(VM.NULL)) error("TOSTR called with null argument", frame);
           if (x instanceof Double || x instanceof Integer) operandStack.push(String.valueOf(x));
           else error("TOSTR called with non Double/Integer type", frame);
+        }
+
+        //----------------------------------------------------------------------
+        // threading
+        //----------------------------------------------------------------------
+
+        // similar to call, starts a new thread of function A - pushes arguments onto the new op stack
+        case THREAD -> {
+          // TODO
+        }
+        // pop x, wait for/join tid x, push return of threaded func
+        case WAIT -> {
+          // TODO
         }
 
         //----------------------------------------------------------------------

@@ -42,6 +42,8 @@ public enum OpCode {
   TOINT,   // pop x, push int(x)
   TODBL,   // pop x, push double(x)
   TOSTR,   // pop x, push str(x)
+
+  // threading
   THREAD,  // similar to call, starts a new thread of function A - pushes arguments onto the new op stack
   WAIT,    // pop x, wait for/join tid x, push return of threaded func
 
