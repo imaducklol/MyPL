@@ -11,6 +11,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MyPL virtual machine for running MyPL programs (as VM
@@ -26,12 +28,10 @@ public class VM {
   };
 
   /* the array heap as an oid to list mapping */
-  // TODO: Ensure no race condition on arrayHeap
-  private final Map<Integer, List<Object>> arrayHeap = new HashMap<>();
+  private final Map<Integer, List<Object>> arrayHeap = new ConcurrentHashMap<>();
 
   /* the struct heap as an oid to object (field to value map) mapping */
-  // TODO: Ensure no race condition on structHeap
-  private final Map<Integer, Map<String, Object>> structHeap = new HashMap<>();
+  private final Map<Integer, Map<String, Object>> structHeap = new ConcurrentHashMap<>();
 
   /* the operand stack */
   // TODO: Handle multiple(?) OpStacks for threads
@@ -45,8 +45,7 @@ public class VM {
   private final Map<String, VMFrameTemplate> templates = new HashMap<>();
 
   /* the next unused object id */
-  // TODO: Ensure no race condition on nextObjectId
-  private int nextObjectId = 2025;
+  private final AtomicInteger nextObjectId = new AtomicInteger(2025);
 
   /* debug flag for output debug info during vm execution (run) */
   private boolean debug = false;
@@ -482,8 +481,8 @@ public class VM {
 
         // allocate struct object, push oid x
         case ALLOCS -> {
-          structHeap.put(nextObjectId, new HashMap<>());
-          operandStack.push(nextObjectId++);
+          structHeap.put(nextObjectId.get(), new HashMap<>());
+          operandStack.push(nextObjectId.getAndIncrement());
         }
         // pop value x, pop oid y, set obj(y)[A] = x
         case SETF -> {
@@ -506,8 +505,8 @@ public class VM {
           for (int i = 0; i < (Integer) x; i++) {
             array.add(VM.NULL);
           }
-          arrayHeap.put(nextObjectId, array);
-          operandStack.push(nextObjectId++);
+          arrayHeap.put(nextObjectId.get(), array);
+          operandStack.push(nextObjectId.getAndIncrement());
         }
         // pop value x, pop index y, pop oid z, set array obj(z)[y] = x
         case SETI -> {
