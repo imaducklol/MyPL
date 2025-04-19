@@ -33,12 +33,13 @@ public class VM {
   /* the struct heap as an oid to object (field to value map) mapping */
   private final Map<Integer, Map<String, Object>> structHeap = new ConcurrentHashMap<>();
 
+  /* the threads as a tid to Thread (field to thread) mapping */
+  private final Map<Integer, ThreadProcessor> threads = new ConcurrentHashMap<>();
+
   /* the operand stack */
-  // TODO: Handle multiple(?) OpStacks for threads
   private final Deque<Object> operandStack = new ArrayDeque<>();
 
   /* the function (frame) call stack */
-  // TODO: Handle multiple(?) callStacks for threads
   private final Deque<VMFrame> callStack = new ArrayDeque<>();
 
   /* the set of program function definitions (frame templates) */
@@ -46,6 +47,9 @@ public class VM {
 
   /* the next unused object id */
   private final AtomicInteger nextObjectId = new AtomicInteger(2025);
+
+  /* the next unused thread id */
+  private final AtomicInteger nextThreadId = new AtomicInteger(2025);
 
   /* debug flag for output debug info during vm execution (run) */
   private boolean debug = false;
@@ -198,10 +202,14 @@ public class VM {
    */
   // TODO: modify run to be able to work on a different call and op stack, should just be able to make them inputs
   public void run() {
+    process("main", operandStack, callStack);
+  }
+
+  public void process(String startingFunc, Deque<Object> operandStack, Deque<VMFrame> callStack) {
     // grab the main frame and "instantiate" it
-    if (!templates.containsKey("main"))
-      error("No 'main' function");
-    VMFrame frame = new VMFrame(templates.get("main"));
+    if (!templates.containsKey(startingFunc))
+      error("No " + startingFunc + " function");
+    VMFrame frame = new VMFrame(templates.get(startingFunc));
     callStack.push(frame);
 
     // run loop until out of call frames or instructions in the frame
@@ -468,11 +476,26 @@ public class VM {
 
         // similar to call, starts a new thread of function A - pushes arguments onto the new op stack
         case THREAD -> {
-          // TODO
+          ThreadProcessor thread = new ThreadProcessor(nextThreadId.get(), this, instr.operand.toString(), operandStack.pop());
+          threads.put(nextThreadId.get(), thread);
+          operandStack.push(nextThreadId.getAndIncrement());
         }
         // pop x, wait for/join tid x, push return of threaded func
         case WAIT -> {
-          // TODO
+          Object x = operandStack.pop();
+          if (x.equals(VM.NULL)) error("WAIT called with null operand", frame);
+          Integer tid = (Integer) x;
+          if (!threads.containsKey(tid)) error("WAIT called on non-existent thread", frame);
+          Optional<Integer> returnVal = threads.get(tid).returnVal;
+          while (returnVal.isEmpty()) {
+            try {
+              wait();
+            } catch (InterruptedException e) {
+              error("Something has gone terribly wrong in WAIT", frame);
+              throw new RuntimeException(e);
+            }
+          }
+          operandStack.push(returnVal.get());
         }
 
         //----------------------------------------------------------------------
@@ -514,7 +537,7 @@ public class VM {
           Object y = operandStack.pop();
           Object z = operandStack.pop();
           if (z.equals(VM.NULL) || !arrayHeap.containsKey((int) z))
-            error("SETI called on nonextant or null array", frame);
+            error("SETI called on non-existent or null array", frame);
           var array = arrayHeap.get((int) z);
           if (y.equals(VM.NULL) || (int) y >= array.size() || (int) y < 0)
             error("SETI called with out of bounds or null index", frame);
@@ -525,7 +548,7 @@ public class VM {
           Object x = operandStack.pop();
           Object y = operandStack.pop();
           if (y.equals(VM.NULL) || !arrayHeap.containsKey((int) y))
-            error("GETI called on nonextant or null array", frame);
+            error("GETI called on non-existent or null array", frame);
           var array = arrayHeap.get((int) y);
           if (x.equals(VM.NULL) || (int) x >= array.size() || (int) x < 0)
             error("GETI called with out of bounds index", frame);
