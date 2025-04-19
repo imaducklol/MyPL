@@ -139,6 +139,14 @@ public class VMInstr {
     return new VMInstr(OpCode.TOSTR);
   }
 
+  public static VMInstr THREAD() {
+    return new VMInstr(OpCode.THREAD);
+  }
+
+  public static VMInstr WAIT() {
+    return new VMInstr(OpCode.WAIT);
+  }
+
   public static VMInstr ALLOCS() {
     return new VMInstr(OpCode.ALLOCS);
   }

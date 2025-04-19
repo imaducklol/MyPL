@@ -1,11 +1,31 @@
 package cpsc326;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 
 public class ThreadingTests {
+
+  /** For dealing with program output **/
+  private PrintStream stdout = System.out;
+  private ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+  @BeforeEach
+  public void changeSystemOut() {
+    // redirect System.out to output
+    System.setOut(new PrintStream(output));
+  }
+
+  @AfterEach
+  public void restoreSystemOut() {
+    // reset System.out to standard out
+    System.setOut(stdout);
+  }
 
   /**
    * Helper to build an input string.

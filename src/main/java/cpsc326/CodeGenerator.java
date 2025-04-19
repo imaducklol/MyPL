@@ -383,6 +383,13 @@ public class CodeGenerator implements Visitor {
         add(VMInstr.TOSTR());
         return;
       }
+      case "thread_create" -> {
+        add(VMInstr.THREAD());
+        return;
+      }
+      case "thread_wait" -> {
+        add(VMInstr.WAIT());
+      }
     }
 
     // handle user defined functions

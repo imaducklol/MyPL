@@ -474,9 +474,9 @@ public class VM {
         // threading
         //----------------------------------------------------------------------
 
-        // similar to call, starts a new thread of function A - pushes arguments onto the new op stack
+        // pop x function, pop y arguments similar to call, starts a new thread of function x - pushes arguments y onto the new op stack
         case THREAD -> {
-          ThreadProcessor thread = new ThreadProcessor(nextThreadId.get(), this, instr.operand.toString(), operandStack.pop());
+          ThreadProcessor thread = new ThreadProcessor(nextThreadId.get(), this, (String) operandStack.pop(), operandStack.pop());
           threads.put(nextThreadId.get(), thread);
           operandStack.push(nextThreadId.getAndIncrement());
         }
