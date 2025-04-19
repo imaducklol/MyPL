@@ -555,7 +555,7 @@ public class SemanticChecker implements Visitor {
           }
           node.args.get(1).accept(this);
           // TODO: Ensure that STRUCT is the type for struct types, we maybe need to check the struct's lexeme exists in structs dict
-          if (currType.type.tokenType != TokenType.STRUCT || currType.isArray) {
+          if (currType.type.tokenType != TokenType.ID || currType.isArray || !structs.containsKey(currType.type.lexeme)) {
             error("Second argument has wrong type, expected struct", node.funName);
           }
           // process function return type
