@@ -72,7 +72,6 @@ public class VM {
    * @param msg   The error message.
    * @param frame The frame where the error occurred.
    */
-  // TODO: Put thread related info in the error messages
   private void error(String msg, VMFrame frame) {
     String s = "%s in %s at %d: %s";
     String name = frame.template.functionName;
@@ -200,7 +199,6 @@ public class VM {
   /**
    * Execute the program
    */
-  // TODO: modify run to be able to work on a different call and op stack, should just be able to make them inputs
   public void run() {
     process("main", operandStack, callStack);
   }
@@ -229,23 +227,6 @@ public class VM {
 
       // increment the pc
       ++frame.pc;
-
-
-      // TODO: Implement the remaining instructions (except for DUP and NOP, see below) ...
-      //   -- see lecture notes for hints and tips
-      //
-      // Additional Hints:
-      //   -- use ensureNotNull(v, frame) if operand can't be null
-      //   -- Deque supports pop(), peek(), isEmpty()
-      //   -- for WRITE, use System.out.print(...)
-      //   -- for READ, use: new BufferedReader(new InputStreamReader(System.in)) and readLine()
-      //   -- for LEN, can check type via: if (value instanceof String) ...
-      //   -- for GETC, can use String charAt() function
-      //   -- for TOINT, can use intValue() on Double
-      //   -- for TOINT, can use Integer.parseInt(...) for String (in try-catch block)
-      //   -- similarly for TODBL (but with corresponding Double versions)
-      //   -- for TOSTR, can use String.valueOf(...)
-      //   -- in a number of places, can cast if type known, e.g., ((int)length)
 
       switch (instr.opcode) {
         //----------------------------------------------------------------------

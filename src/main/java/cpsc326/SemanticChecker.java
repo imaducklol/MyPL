@@ -36,6 +36,13 @@ public class SemanticChecker implements Visitor {
   /**
    *
    */
+  private boolean isBaseType(TokenType type) {
+    return List.of(TokenType.INT_TYPE, TokenType.DOUBLE_TYPE, TokenType.BOOL_TYPE, TokenType.STRING_TYPE).contains(type);
+  }
+
+  /**
+   *
+   */
   private boolean isBuiltInFunction(String name) {
     return List.of("print", "println", "readln", "size", "get", "int_val", "dbl_val", "str_val", "thread_create", "thread_wait").contains(name);
   }
@@ -243,7 +250,7 @@ public class SemanticChecker implements Visitor {
     }
 
     assert type != null;
-    if (!isBaseType(type.type.lexeme) && !structs.containsKey(type.type.lexeme)) {
+    if (!isBaseType(type.type.tokenType) && !structs.containsKey(type.type.lexeme)) {
       error("Undefined variable type", type.type);
     }
     symbolTable.add(varName, type);
@@ -428,14 +435,14 @@ public class SemanticChecker implements Visitor {
       switch (node.funName.lexeme) {
         case "int_val" -> {
           // check args count
-          if (1 != node.args.size()) {
+          if (1 != node.args.size())
             error("Wrong number of arguments supplied, expected 1", node.funName);
-          }
+
           // check arg types
           node.args.getFirst().accept(this);
-          if (!List.of(TokenType.DOUBLE_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType)) {
+          if (!List.of(TokenType.DOUBLE_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType))
             error("Argument has wrong type, expected double or string type", node.funName);
-          }
+
           // process function return type
           currType = new DataType();
           currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
@@ -443,14 +450,14 @@ public class SemanticChecker implements Visitor {
         }
         case "dbl_val" -> {
           // check args count
-          if (1 != node.args.size()) {
+          if (1 != node.args.size())
             error("Wrong number of arguments supplied, expected 1", node.funName);
-          }
+
           // check arg types
           node.args.getFirst().accept(this);
-          if (!List.of(TokenType.INT_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType)) {
+          if (!List.of(TokenType.INT_TYPE, TokenType.STRING_TYPE).contains(currType.type.tokenType))
             error("Argument has wrong type, expected int or string type", node.funName);
-          }
+
           // process function return type
           currType = new DataType();
           currType.type = new Token(TokenType.DOUBLE_TYPE, "double", node.funName.line, node.funName.column);
@@ -458,14 +465,14 @@ public class SemanticChecker implements Visitor {
         }
         case "str_val" -> {
           // check args count
-          if (1 != node.args.size()) {
+          if (1 != node.args.size())
             error("Wrong number of arguments supplied, expected 1", node.funName);
-          }
+
           // check arg types
           node.args.getFirst().accept(this);
-          if (!List.of(TokenType.INT_TYPE, TokenType.DOUBLE_TYPE).contains(currType.type.tokenType)) {
+          if (!List.of(TokenType.INT_TYPE, TokenType.DOUBLE_TYPE).contains(currType.type.tokenType))
             error("Argument has wrong type, expected int or double type", node.funName);
-          }
+
           // process function return type
           currType = new DataType();
           currType.type = new Token(TokenType.STRING_TYPE, "string", node.funName.line, node.funName.column);
@@ -473,13 +480,13 @@ public class SemanticChecker implements Visitor {
         }
         case "print" -> {
           // check args count
-          if (1 != node.args.size()) {
+          if (1 != node.args.size())
             error("Wrong number of arguments supplied, expected 1", node.funName);
-          }
+
           node.args.getFirst().accept(this);
-          if (currType.isArray || currType.type.tokenType == TokenType.ID) {
+          if (currType.isArray || currType.type.tokenType == TokenType.ID)
             error("Print cannot accept array or struct types", node.funName);
-          }
+
           // process function return type
           currType = new DataType();
           currType.type = new Token(TokenType.VOID_TYPE, "null", node.funName.line, node.funName.column);
@@ -491,9 +498,9 @@ public class SemanticChecker implements Visitor {
             error("Wrong number of arguments supplied, expected 1", node.funName);
           }
           node.args.getFirst().accept(this);
-          if (currType.isArray || currType.type.tokenType == TokenType.ID) {
+          if (currType.isArray || currType.type.tokenType == TokenType.ID)
             error("Println cannot accept array types", node.funName);
-          }
+
           // process function return type
           currType = new DataType();
           currType.type = new Token(TokenType.VOID_TYPE, "null", node.funName.line, node.funName.column);
@@ -501,9 +508,9 @@ public class SemanticChecker implements Visitor {
         }
         case "readln" -> {
           // check args count
-          if (!node.args.isEmpty()) {
+          if (!node.args.isEmpty())
             error("Wrong number of arguments supplied, expected 0", node.funName);
-          }
+
           // process function return type
           currType = new DataType();
           currType.type = new Token(TokenType.STRING_TYPE, "string", node.funName.line, node.funName.column);
@@ -511,14 +518,14 @@ public class SemanticChecker implements Visitor {
         }
         case "size" -> {
           // check args count
-          if (1 != node.args.size()) {
+          if (1 != node.args.size())
             error("Wrong number of arguments supplied, expected 1", node.funName);
-          }
+
           // check arg types
           node.args.getFirst().accept(this);
-          if (currType.type.tokenType != TokenType.STRING_TYPE && !currType.isArray) {
+          if (currType.type.tokenType != TokenType.STRING_TYPE && !currType.isArray)
             error("Argument has wrong type, expected string or array type", node.funName);
-          }
+
           // process function return type
           currType = new DataType();
           currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
@@ -526,38 +533,47 @@ public class SemanticChecker implements Visitor {
         }
         case "get" -> {
           // check args count
-          if (2 != node.args.size()) {
+          if (2 != node.args.size())
             error("Wrong number of arguments supplied, expected 2", node.funName);
-          }
+
           // check arg types
           node.args.getFirst().accept(this);
-          if (currType.type.tokenType != TokenType.INT_TYPE) {
+          if (currType.type.tokenType != TokenType.INT_TYPE)
             error("First argument has wrong type, expected int type", node.funName);
-          }
+
           node.args.get(1).accept(this);
-          if (currType.type.tokenType != TokenType.STRING_TYPE && !currType.isArray) {
+          if (currType.type.tokenType != TokenType.STRING_TYPE && !currType.isArray)
             error("Second argument has wrong type, expected string or array type", node.funName);
-          }
+
           // process function return type
           currType.type = new Token(currType.type.tokenType, currType.type.lexeme, node.funName.line, node.funName.column);
           currType.isArray = false;
         }
         case "thread_create" -> {
           // check args count
-          if (2 != node.args.size()) {
+          if (2 != node.args.size())
             error("Wrong number of arguments supplied, expected 2", node.funName);
-          }
+
           // check arg types
           node.args.getFirst().accept(this);
-          // TODO: Ensure this is a string literal, NOT a variable
-          if (currType.type.tokenType != TokenType.STRING_TYPE || currType.isArray) {
+          if (currType.type.tokenType != TokenType.STRING_TYPE || currType.isArray)
             error("First argument has wrong type, expected string type", node.funName);
-          }
+
+          if (!functions.containsKey(currType.type.lexeme))
+            error("First argument must be a literal of the name of a function", node.funName);
+
+          FunDef function = functions.get(currType.type.lexeme);
+
+          if (!(function.returnType.type.tokenType == TokenType.VOID_TYPE || function.returnType.type.tokenType == TokenType.INT_TYPE))
+            error("Return type of given function must be void or int", node.funName);
+
           node.args.get(1).accept(this);
-          // TODO: Ensure that STRUCT is the type for struct types, we maybe need to check the struct's lexeme exists in structs dict
-          if (currType.type.tokenType != TokenType.ID || currType.isArray || !structs.containsKey(currType.type.lexeme)) {
+          if (currType.type.tokenType != TokenType.ID || currType.isArray || !structs.containsKey(currType.type.lexeme))
             error("Second argument has wrong type, expected struct", node.funName);
-          }
+
+          if (!(function.params.size() == 1 && function.params.getFirst().varName.lexeme.equals(currType.type.lexeme)))
+            error("Function definition and given argument do not match");
+
           // process function return type
           // this is just the thread id (tid)
           currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
@@ -565,16 +581,15 @@ public class SemanticChecker implements Visitor {
         }
         case "thread_wait" -> {
           // check args count
-          if (1 != node.args.size()) {
+          if (1 != node.args.size())
             error("Wrong number of arguments supplied, expected 1", node.funName);
-          }
+
           // check arg types
           node.args.getFirst().accept(this);
-          if (currType.type.tokenType != TokenType.INT_TYPE || currType.isArray) {
+          if (currType.type.tokenType != TokenType.INT_TYPE || currType.isArray)
             error("First argument has wrong type, expected int type", node.funName);
-          }
+
           // process function return type
-          // TODO: Figure out the type and lexeme here, maybe just letting it return ints and handle other stuff through the reference
           currType.type = new Token(TokenType.INT_TYPE, "int", node.funName.line, node.funName.column);
           currType.isArray = false;
         }
@@ -614,11 +629,11 @@ public class SemanticChecker implements Visitor {
     int column = node.literal.column;
     Token typeToken = null;
     switch (literalType) {
-      case TokenType.INT_VAL -> typeToken = new Token(TokenType.INT_TYPE, "int", line, column);
-      case TokenType.DOUBLE_VAL -> typeToken = new Token(TokenType.DOUBLE_TYPE, "double", line, column);
-      case TokenType.BOOL_VAL -> typeToken = new Token(TokenType.BOOL_TYPE, "bool", line, column);
-      case TokenType.STRING_VAL -> typeToken = new Token(TokenType.STRING_TYPE, "string", line, column);
-      case TokenType.NULL_VAL -> typeToken = new Token(TokenType.VOID_TYPE, "null", line, column);
+      case TokenType.INT_VAL    -> typeToken = new Token(TokenType.INT_TYPE,    node.literal.lexeme, line, column);
+      case TokenType.DOUBLE_VAL -> typeToken = new Token(TokenType.DOUBLE_TYPE, node.literal.lexeme, line, column);
+      case TokenType.BOOL_VAL   -> typeToken = new Token(TokenType.BOOL_TYPE,   node.literal.lexeme, line, column);
+      case TokenType.STRING_VAL -> typeToken = new Token(TokenType.STRING_TYPE, node.literal.lexeme, line, column);
+      case TokenType.NULL_VAL   -> typeToken = new Token(TokenType.VOID_TYPE,   node.literal.lexeme, line, column);
     }
     currType = new DataType();
     currType.type = typeToken;
