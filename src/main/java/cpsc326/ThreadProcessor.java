@@ -18,6 +18,9 @@ public class ThreadProcessor {
   /* thread identification int */
   private int tid;
 
+  /* Thread object */
+  Thread thread;
+
   /* reference to main vm */
   private VM vm;
 
@@ -42,9 +45,11 @@ public class ThreadProcessor {
 
     operandStack.push(argumentStruct);
 
-    new Thread(() -> {
+    thread = new Thread(() -> {
       vm.process(funcName, operandStack, callStack);
       returnVal = Optional.of((Integer) operandStack.pop());
     });
+
+    thread.start();
   }
 }

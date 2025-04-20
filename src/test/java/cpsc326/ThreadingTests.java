@@ -15,7 +15,7 @@ public class ThreadingTests {
   private PrintStream stdout = System.out;
   private ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-  @BeforeEach
+  /*@BeforeEach
   public void changeSystemOut() {
     // redirect System.out to output
     System.setOut(new PrintStream(output));
@@ -25,7 +25,7 @@ public class ThreadingTests {
   public void restoreSystemOut() {
     // reset System.out to standard out
     System.setOut(stdout);
-  }
+  }*/
 
   /**
    * Helper to build an input string.
@@ -37,6 +37,19 @@ public class ThreadingTests {
       e.printStackTrace();
     }
     return null;
+  }
+
+  /**
+   * Helper to generate a VM to run
+   */
+  VM build(String program) {
+    Lexer lexer = new Lexer(istream(program));
+    ASTParser parser = new ASTParser(lexer);
+    Program p = parser.parse();
+    p.accept(new SemanticChecker());
+    VM vm = new VM();
+    p.accept(new CodeGenerator(vm));
+    return vm;
   }
 
   @Test
@@ -57,10 +70,10 @@ public class ThreadingTests {
               var i2 = new input(2, false, 4)
               var tid1 = thread_create("test", i1)
               var tid2 = thread_create("test", i2)
-              println(thread_wait(tid2))
               println(thread_wait(tid1))
+              println(thread_wait(tid2))
             }
             """;
-    new ASTParser(new Lexer(istream(p))).parse().accept(new SemanticChecker());
+    build(p).run();
   }
 }

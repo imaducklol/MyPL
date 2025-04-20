@@ -486,16 +486,14 @@ public class VM {
           if (x.equals(VM.NULL)) error("WAIT called with null operand", frame);
           Integer tid = (Integer) x;
           if (!threads.containsKey(tid)) error("WAIT called on non-existent thread", frame);
-          Optional<Integer> returnVal = threads.get(tid).returnVal;
-          while (returnVal.isEmpty()) {
-            try {
-              wait();
-            } catch (InterruptedException e) {
-              error("Something has gone terribly wrong in WAIT", frame);
-              throw new RuntimeException(e);
-            }
+          ThreadProcessor threadProcessor = threads.get(tid);
+          try {
+            threadProcessor.thread.join();
+          } catch (InterruptedException e) {
+            error("Waiting for thread failed");
+            throw new RuntimeException(e);
           }
-          operandStack.push(returnVal.get());
+          operandStack.push(threadProcessor.returnVal.get());
         }
 
         //----------------------------------------------------------------------

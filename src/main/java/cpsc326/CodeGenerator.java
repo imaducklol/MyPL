@@ -389,6 +389,7 @@ public class CodeGenerator implements Visitor {
       }
       case "thread_wait" -> {
         add(VMInstr.WAIT());
+        return;
       }
     }
 
