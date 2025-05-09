@@ -1,0 +1,14 @@
+void doLotsOfWork() {
+    var i: int = 2
+    for x from 0 to 9999999 {
+        i = i * i / i * i / i
+    }
+}
+
+void main() {
+    doLotsOfWork()
+    doLotsOfWork()
+    doLotsOfWork()
+    doLotsOfWork()
+    doLotsOfWork()
+}

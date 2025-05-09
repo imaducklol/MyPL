@@ -31,7 +31,7 @@ public class ThreadProcessor {
   private final Deque<VMFrame> callStack = new ArrayDeque<>();
 
   /* the result of the function, filled when it is completed */
-  public Optional<Integer> returnVal = Optional.empty();
+  public Optional<Object> returnVal = Optional.empty();
 
   /**
    * Create a new Thread given a virtual machine
@@ -47,7 +47,7 @@ public class ThreadProcessor {
 
     thread = new Thread(() -> {
       vm.process(funcName, operandStack, callStack);
-      returnVal = Optional.of((Integer) operandStack.pop());
+      returnVal = Optional.of(operandStack.pop());
     });
 
     thread.start();

@@ -1,0 +1,26 @@
+int doLotsOfWork(input: input) {
+    var i: int = 2
+    for x from 0 to 9999999 {
+        i = i * i / i * i / i
+    }
+    return 1
+}
+
+struct input {
+    dummy: int
+}
+
+void main() {
+    var ids = new int[5]
+    var input = new input(1)
+
+    ids[0] = thread_create("doLotsOfWork", input)
+    ids[1] = thread_create("doLotsOfWork", input)
+    ids[2] = thread_create("doLotsOfWork", input)
+    ids[3] = thread_create("doLotsOfWork", input)
+    ids[4] = thread_create("doLotsOfWork", input)
+
+    for x from 0 to 4 {
+        var return_val = thread_wait(ids[x])
+    }
+}
