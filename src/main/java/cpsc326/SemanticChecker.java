@@ -564,14 +564,14 @@ public class SemanticChecker implements Visitor {
 
           FunDef function = functions.get(currType.type.lexeme);
 
-          if (!(function.returnType.type.tokenType == TokenType.VOID_TYPE || function.returnType.type.tokenType == TokenType.INT_TYPE))
+          if (function.returnType.type.tokenType != TokenType.INT_TYPE)
             error("Return type of given function must be void or int", node.funName);
 
           node.args.get(1).accept(this);
           if (currType.type.tokenType != TokenType.ID || currType.isArray || !structs.containsKey(currType.type.lexeme))
             error("Second argument has wrong type, expected struct", node.funName);
 
-          if (!(function.params.size() == 1 && function.params.getFirst().varName.lexeme.equals(currType.type.lexeme)))
+          if (!(function.params.size() == 1 && function.params.getFirst().dataType.type.lexeme.equals(currType.type.lexeme)))
             error("Function definition and given argument do not match");
 
           // process function return type
