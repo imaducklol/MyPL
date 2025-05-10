@@ -24,4 +24,6 @@ The sytax is uses two new functions:
 
 Youtube Video: https://youtu.be/px0on2SM6uU
 
+Because testing of multithreaded programs is dificult, the new unit test is purely checking whether or not it can still compile and run using my new functions. It's output is effectively random!
+
 Credit to Dr. Bowers for tests and general guidance through the project. 
