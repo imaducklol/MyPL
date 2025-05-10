@@ -1,13 +1,15 @@
 /**
  * CPSC 326, Spring 2025
- * 
- * PUT YOUR NAME HERE
+ * The Code Generation implementation
+ * <p>
+ * Orion Hess
  */
-
 
 package cpsc326;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -16,41 +18,44 @@ import java.util.*;
 public class CodeGenerator implements Visitor {
 
   /* vm to add frames to */
-  private VM vm;
+  private final VM vm;
 
   /* current frame template being generated */
   private VMFrameTemplate currTemplate;
 
   /* variable -> index mappings with respect to environments */
-  private VarTable varTable = new VarTable();
+  private final VarTable varTable = new VarTable();
 
   /* struct defs for field names */
-  private Map<String,StructDef> structs = new HashMap<>();  
+  private final Map<String, StructDef> structs = new HashMap<>();
 
 
   /**
    * Create a new Code Generator given a virtual machine
+   *
    * @param vm the VM for storing generated frame templates
    */
   public CodeGenerator(VM vm) {
     this.vm = vm;
   }
-  
+
   //----------------------------------------------------------------------
   // Helper functions
   //----------------------------------------------------------------------
 
   /**
    * Helper to add an instruction to the current frame.
+   *
    * @param instr the instruction to add
    */
   private void add(VMInstr instr) {
     currTemplate.add(instr);
   }
-  
+
   /**
    * Helper to add an instruction to the current frame with a comment.
-   * @param instr the instruction to add
+   *
+   * @param instr   the instruction to add
    * @param comment the comment to assign to the instruction
    */
   private void add(VMInstr instr, String comment) {
@@ -70,7 +75,7 @@ public class CodeGenerator implements Visitor {
         add(VMInstr.POP(), "clean up call rvalue statement");
     }
   }
-  
+
   //----------------------------------------------------------------------
   // Visitors for programs, functions, and structs
   //----------------------------------------------------------------------
@@ -87,7 +92,7 @@ public class CodeGenerator implements Visitor {
       f.accept(this);
   }
 
-  
+
   /**
    * Generates a function definition
    */
@@ -116,7 +121,7 @@ public class CodeGenerator implements Visitor {
     vm.add(currTemplate);
   }
 
-  
+
   /**
    * Adds the struct def to the list of structs.
    */
@@ -124,7 +129,7 @@ public class CodeGenerator implements Visitor {
     structs.put(node.structName.lexeme, node);
   }
 
-  
+
   /**
    * The visitor function for a variable definition, but this visitor
    * function is not used in code generation.
@@ -173,7 +178,7 @@ public class CodeGenerator implements Visitor {
 
     // otherwise...
 
-     add(VMInstr.LOAD(varTable.get(firstName)));
+    add(VMInstr.LOAD(varTable.get(firstName)));
 
     // process arrayExpr if present for first
     if (first.arrayExpr.isPresent()) {
@@ -186,7 +191,10 @@ public class CodeGenerator implements Visitor {
     for (int i = 0; i < lvalue.size(); i++) {
       VarRef var = lvalue.get(i);
 
-      if (firstDone) { firstDone = false; continue; }
+      if (firstDone) {
+        firstDone = false;
+        continue;
+      }
 
 
       if (i + 1 == lvalue.size()) {
@@ -375,6 +383,14 @@ public class CodeGenerator implements Visitor {
         add(VMInstr.TOSTR());
         return;
       }
+      case "thread_create" -> {
+        add(VMInstr.THREAD());
+        return;
+      }
+      case "thread_wait" -> {
+        add(VMInstr.WAIT());
+        return;
+      }
     }
 
     // handle user defined functions
@@ -420,7 +436,10 @@ public class CodeGenerator implements Visitor {
 
     boolean firstDone = true;
     for (VarRef var : node.path) {
-      if (firstDone) { firstDone = false; continue;}
+      if (firstDone) {
+        firstDone = false;
+        continue;
+      }
 
       add(VMInstr.GETF(var.varName.lexeme));
 
@@ -440,6 +459,4 @@ public class CodeGenerator implements Visitor {
   }
 
 
-
-  
 }

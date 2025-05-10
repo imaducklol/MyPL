@@ -29,7 +29,7 @@ public class HW5Prog2 {
   //   print(sum / 2)
   //   println("")
   // }
-  
+
   public static void main(String[] args) {
     VMFrameTemplate m = new VMFrameTemplate("main");
 

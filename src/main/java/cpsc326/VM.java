@@ -1,21 +1,18 @@
 /**
  * CPSC 326, Spring 2025
  * The virtual machine implementation.
+ * <p>
+ * Orion Hess
  */
 
 package cpsc326;
 
-import java.io.IOException;
-import java.sql.Array;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.ArrayDeque;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Collections;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MyPL virtual machine for running MyPL programs (as VM
@@ -31,22 +28,28 @@ public class VM {
   };
 
   /* the array heap as an oid to list mapping */
-  private Map<Integer, List<Object>> arrayHeap = new HashMap<>();
+  private final Map<Integer, List<Object>> arrayHeap = new ConcurrentHashMap<>();
 
   /* the struct heap as an oid to object (field to value map) mapping */
-  private Map<Integer, Map<String, Object>> structHeap = new HashMap<>();
+  private final Map<Integer, Map<String, Object>> structHeap = new ConcurrentHashMap<>();
+
+  /* the threads as a tid to Thread (field to thread) mapping */
+  private final Map<Integer, ThreadProcessor> threads = new ConcurrentHashMap<>();
 
   /* the operand stack */
-  private Deque<Object> operandStack = new ArrayDeque<>();
+  private final Deque<Object> operandStack = new ArrayDeque<>();
 
   /* the function (frame) call stack */
-  private Deque<VMFrame> callStack = new ArrayDeque<>();
+  private final Deque<VMFrame> callStack = new ArrayDeque<>();
 
   /* the set of program function definitions (frame templates) */
-  private Map<String, VMFrameTemplate> templates = new HashMap<>();
+  private final Map<String, VMFrameTemplate> templates = new HashMap<>();
 
   /* the next unused object id */
-  private int nextObjectId = 2025;
+  private final AtomicInteger nextObjectId = new AtomicInteger(2025);
+
+  /* the next unused thread id */
+  private final AtomicInteger nextThreadId = new AtomicInteger(2025);
 
   /* debug flag for output debug info during vm execution (run) */
   private boolean debug = false;
@@ -131,7 +134,7 @@ public class VM {
     else if (x instanceof Double)
       return (double) x + (double) y;
     else
-      return (String) x + (String) y;
+      return x + (String) y;
   }
 
   /**
@@ -159,7 +162,7 @@ public class VM {
    */
   private Object divHelper(Object x, Object y, VMFrame f) {
     if (x instanceof Integer && (int) y != 0)
-      return (int) ((int) x / (int) y);
+      return (int) x / (int) y;
     else if (x instanceof Double && (double) y != 0.0)
       return (double) x / (double) y;
     else
@@ -197,10 +200,14 @@ public class VM {
    * Execute the program
    */
   public void run() {
+    process("main", operandStack, callStack);
+  }
+
+  public void process(String startingFunc, Deque<Object> operandStack, Deque<VMFrame> callStack) {
     // grab the main frame and "instantiate" it
-    if (!templates.containsKey("main"))
-      error("No 'main' function");
-    VMFrame frame = new VMFrame(templates.get("main"));
+    if (!templates.containsKey(startingFunc))
+      error("No " + startingFunc + " function");
+    VMFrame frame = new VMFrame(templates.get(startingFunc));
     callStack.push(frame);
 
     // run loop until out of call frames or instructions in the frame
@@ -220,23 +227,6 @@ public class VM {
 
       // increment the pc
       ++frame.pc;
-
-
-      // TODO: Implement the remaining instructions (except for DUP and NOP, see below) ...
-      //   -- see lecture notes for hints and tips
-      //
-      // Additional Hints:
-      //   -- use ensureNotNull(v, frame) if operand can't be null
-      //   -- Deque supports pop(), peek(), isEmpty()
-      //   -- for WRITE, use System.out.print(...)
-      //   -- for READ, use: new BufferedReader(new InputStreamReader(System.in)) and readLine()
-      //   -- for LEN, can check type via: if (value instanceof String) ...
-      //   -- for GETC, can use String charAt() function
-      //   -- for TOINT, can use intValue() on Double
-      //   -- for TOINT, can use Integer.parseInt(...) for String (in try-catch block)
-      //   -- similarly for TODBL (but with corresponding Double versions)
-      //   -- for TOSTR, can use String.valueOf(...)
-      //   -- in a number of places, can cast if type known, e.g., ((int)length)
 
       switch (instr.opcode) {
         //----------------------------------------------------------------------
@@ -462,13 +452,39 @@ public class VM {
         }
 
         //----------------------------------------------------------------------
+        // threading
+        //----------------------------------------------------------------------
+
+        // pop x function, pop y arguments similar to call, starts a new thread of function x - pushes arguments y onto the new op stack
+        case THREAD -> {
+          ThreadProcessor thread = new ThreadProcessor(nextThreadId.get(), this, (String) operandStack.pop(), operandStack.pop());
+          threads.put(nextThreadId.get(), thread);
+          operandStack.push(nextThreadId.getAndIncrement());
+        }
+        // pop x, wait for/join tid x, push return of threaded func
+        case WAIT -> {
+          Object x = operandStack.pop();
+          if (x.equals(VM.NULL)) error("WAIT called with null operand", frame);
+          Integer tid = (Integer) x;
+          if (!threads.containsKey(tid)) error("WAIT called on non-existent thread", frame);
+          ThreadProcessor threadProcessor = threads.get(tid);
+          try {
+            threadProcessor.thread.join();
+          } catch (InterruptedException e) {
+            error("Waiting for thread failed");
+            throw new RuntimeException(e);
+          }
+          operandStack.push(threadProcessor.returnVal.get());
+        }
+
+        //----------------------------------------------------------------------
         // heap
         //----------------------------------------------------------------------
 
         // allocate struct object, push oid x
         case ALLOCS -> {
-          structHeap.put(nextObjectId, new HashMap<>());
-          operandStack.push(nextObjectId++);
+          structHeap.put(nextObjectId.get(), new HashMap<>());
+          operandStack.push(nextObjectId.getAndIncrement());
         }
         // pop value x, pop oid y, set obj(y)[A] = x
         case SETF -> {
@@ -491,8 +507,8 @@ public class VM {
           for (int i = 0; i < (Integer) x; i++) {
             array.add(VM.NULL);
           }
-          arrayHeap.put(nextObjectId, array);
-          operandStack.push(nextObjectId++);
+          arrayHeap.put(nextObjectId.get(), array);
+          operandStack.push(nextObjectId.getAndIncrement());
         }
         // pop value x, pop index y, pop oid z, set array obj(z)[y] = x
         case SETI -> {
@@ -500,7 +516,7 @@ public class VM {
           Object y = operandStack.pop();
           Object z = operandStack.pop();
           if (z.equals(VM.NULL) || !arrayHeap.containsKey((int) z))
-            error("SETI called on nonextant or null array", frame);
+            error("SETI called on non-existent or null array", frame);
           var array = arrayHeap.get((int) z);
           if (y.equals(VM.NULL) || (int) y >= array.size() || (int) y < 0)
             error("SETI called with out of bounds or null index", frame);
@@ -511,7 +527,7 @@ public class VM {
           Object x = operandStack.pop();
           Object y = operandStack.pop();
           if (y.equals(VM.NULL) || !arrayHeap.containsKey((int) y))
-            error("GETI called on nonextant or null array", frame);
+            error("GETI called on non-existent or null array", frame);
           var array = arrayHeap.get((int) y);
           if (x.equals(VM.NULL) || (int) x >= array.size() || (int) x < 0)
             error("GETI called with out of bounds index", frame);
@@ -537,3 +553,20 @@ public class VM {
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

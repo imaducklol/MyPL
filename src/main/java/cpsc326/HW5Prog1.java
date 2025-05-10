@@ -40,7 +40,7 @@ public class HW5Prog1 {
   //     sum = sum + val
   //   }
   // }
-  
+
   public static void main(String[] args) {
     VMFrameTemplate m = new VMFrameTemplate("main");
     VMFrameTemplate p = new VMFrameTemplate("is_prime");
@@ -78,8 +78,6 @@ public class HW5Prog1 {
     m.add(VMInstr.ADD());
     m.add(VMInstr.STORE(0));
     m.add(VMInstr.JMP(4));
-
-
 
 
     p.add(VMInstr.STORE(0)); // store n

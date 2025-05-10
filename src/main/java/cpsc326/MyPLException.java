@@ -12,27 +12,16 @@ package cpsc326;
  */
 public class MyPLException extends RuntimeException {
 
-  private enum ErrorType {
-    LEXER_ERROR, PARSE_ERROR, STATIC_ERROR, VM_ERROR
-  };
+  private final String message;       // the error message
 
-  private String message;       // the error message 
-  private ErrorType type;       // the stage the error occurred in
-  
+  private final ErrorType type;       // the stage the error occurred in
+
   /**
    * Create a new exception of the given type.
    */
   public MyPLException(String message, ErrorType type) {
     this.message = message;
     this.type = type;
-  }
-
-  /**
-   * Returns the exception message.
-   */
-  @Override
-  public String getMessage() {
-    return type.toString() + ": " + message;
   }
 
   /**
@@ -61,6 +50,18 @@ public class MyPLException extends RuntimeException {
    */
   public static void vmError(String message) {
     throw new MyPLException(message, ErrorType.VM_ERROR);
+  }
+
+  /**
+   * Returns the exception message.
+   */
+  @Override
+  public String getMessage() {
+    return type.toString() + ": " + message;
+  }
+
+  private enum ErrorType {
+    LEXER_ERROR, PARSE_ERROR, STATIC_ERROR, VM_ERROR
   }
 
 }

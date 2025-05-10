@@ -33,5 +33,5 @@ public class Token {
   public String toString() {
     return tokenType + " \"" + lexeme + "\" line " + line + " column " + column;
   }
-    
+
 }

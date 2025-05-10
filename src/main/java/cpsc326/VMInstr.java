@@ -5,10 +5,6 @@
 
 package cpsc326;
 
-import java.util.List;
-import java.util.ArrayList;
-
-
 /**
  * Represents a VM instruction.
  */
@@ -19,15 +15,17 @@ public class VMInstr {
 
   /**
    * Create an instruction
+   *
    * @param opcode The instruction opcode.
    */
   public VMInstr(OpCode opcode) {
     this.opcode = opcode;
   }
-  
+
   /**
    * Create an instruction
-   * @param opcode The instruction opcode.
+   *
+   * @param opcode  The instruction opcode.
    * @param operand The operand value.
    */
   public VMInstr(OpCode opcode, Object operand) {
@@ -35,24 +33,11 @@ public class VMInstr {
     this.operand = operand;
   }
 
-  /**
-   * Pretty print an instruction.
-   */
-  public String toString() {
-    String s = opcode + "(";
-    if (operand != null)
-      s += operand;
-    s += ")";
-    if (!comment.equals(""))
-      s += "  // " + comment;
-    return s;
-  }
-
-  // Helpers to create instructions (use these to create actual instructions)
-  
   public static VMInstr PUSH(Object value) {
     return new VMInstr(OpCode.PUSH, value);
   }
+
+  // Helpers to create instructions (use these to create actual instructions)
 
   public static VMInstr POP() {
     return new VMInstr(OpCode.POP);
@@ -69,7 +54,7 @@ public class VMInstr {
   public static VMInstr ADD() {
     return new VMInstr(OpCode.ADD);
   }
-  
+
   public static VMInstr SUB() {
     return new VMInstr(OpCode.SUB);
   }
@@ -85,7 +70,7 @@ public class VMInstr {
   public static VMInstr CMPLT() {
     return new VMInstr(OpCode.CMPLT);
   }
-  
+
   public static VMInstr CMPLE() {
     return new VMInstr(OpCode.CMPLE);
   }
@@ -109,7 +94,7 @@ public class VMInstr {
   public static VMInstr NOT() {
     return new VMInstr(OpCode.NOT);
   }
-  
+
   public static VMInstr JMP(int offset) {
     return new VMInstr(OpCode.JMP, offset);
   }
@@ -154,6 +139,14 @@ public class VMInstr {
     return new VMInstr(OpCode.TOSTR);
   }
 
+  public static VMInstr THREAD() {
+    return new VMInstr(OpCode.THREAD);
+  }
+
+  public static VMInstr WAIT() {
+    return new VMInstr(OpCode.WAIT);
+  }
+
   public static VMInstr ALLOCS() {
     return new VMInstr(OpCode.ALLOCS);
   }
@@ -185,6 +178,19 @@ public class VMInstr {
   public static VMInstr NOP() {
     return new VMInstr(OpCode.NOP);
   }
-  
+
+  /**
+   * Pretty print an instruction.
+   */
+  public String toString() {
+    String s = opcode + "(";
+    if (operand != null)
+      s += operand;
+    s += ")";
+    if (!comment.equals(""))
+      s += "  // " + comment;
+    return s;
+  }
+
 }
 
