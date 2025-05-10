@@ -13,10 +13,14 @@ The compiler is separated into 6 main pieces
 
 For the extension, I implemented multithreading!
 The sytax is uses two new functions:
+
 `int thread_create(funcName: string, input: someStruct)`
+
 `int thread_wait(tid: int)`
 
+
 `thread_create` returns the tid for `thread_wait`
+
 `thread_wait` returns the return value of the called function. (Must be an int function)
 
 Youtube Video: https://youtu.be/px0on2SM6uU
